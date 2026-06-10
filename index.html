@@ -161,7 +161,7 @@ const INIT={
   gastos:{mes:'Jan/2025',mesIdx:0,
     rec:{sal:0,extras:[]},
     fixas:[],
-    cart:{cred:0,deb:0}},
+    cartoes_gastos:[]},
   hist:MESES.map(m=>({m,r:0,g:0}))
 };
 
@@ -214,6 +214,15 @@ function migrar(d){
   if(!d.rf) d.rf=[];
   if(!d.metas) d.metas=INIT.metas;
   if(!d.hist) d.hist=MESES.map(m=>({m,r:0,g:0}));
+  // Migrar cart antigo
+  if(d.gastos && d.gastos.cart && !d.gastos.cartoes_gastos){
+    const cg=[];
+    if(d.gastos.cart.cred) cg.push({n:'Cartão de crédito',tipo:'credito',fat:+d.gastos.cart.cred});
+    if(d.gastos.cart.deb)  cg.push({n:'Cartão de débito', tipo:'debito', fat:+d.gastos.cart.deb});
+    d.gastos.cartoes_gastos=cg;
+    delete d.gastos.cart;
+  }
+  if(d.gastos && !d.gastos.cartoes_gastos) d.gastos.cartoes_gastos=[];
   return d;
 }
 
@@ -422,7 +431,7 @@ function rGastos(){
   D=ld();const g=D.gastos;
   const renda=(+g.rec.sal||0)+(g.rec.extras||[]).reduce((s,e)=>s+(+e.v||0),0);
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
-  const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
+  const cart=(g.cartoes_gastos||[]).reduce((s,c)=>s+(+c.fat||0),0);
   const total=fix+cart;
   const saldo=renda-total;
   rH('Gastos',g.mes||'Jun/2025');
@@ -461,9 +470,18 @@ function rGastos(){
     ${!(g.fixas||[]).length?'<div style="font-size:13px;color:#8e8e93;text-align:center;padding:8px 0">Nenhuma despesa fixa</div>':''}
   </div>
   <div class="block">
-    <div class="block-title">Cartões</div>
-    <div class="grow"><span class="nome">Cartão de crédito</span><span class="val">${R(g.cart.cred)}</span></div>
-    <div class="grow"><span class="nome">Cartão de débito</span><span class="val">${R(g.cart.deb)}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="block-title" style="margin-bottom:0">Cartões</div>
+      <span style="font-size:12px;color:#0071e3;font-weight:600;cursor:pointer" onclick="editCartoesGastos()">Gerenciar</span>
+    </div>
+    ${(g.cartoes_gastos||[]).length===0
+      ? '<div style="font-size:13px;color:#8e8e93;text-align:center;padding:8px 0">Nenhum cartão cadastrado</div>'
+      : (g.cartoes_gastos||[]).map(c=>`
+        <div class="grow">
+          <span class="nome">${c.n} <span style="font-size:10px;color:#8e8e93">${c.tipo==='debito'?'débito':'crédito'}</span></span>
+          <span class="val" style="color:${c.tipo==='debito'?'#1a1a1e':'#d70015'}">${R(c.fat)}</span>
+        </div>`).join('')
+    }
   </div>
   <button class="btn" onclick="editGastos()">Editar valores do mês</button>`;
 }
@@ -474,7 +492,7 @@ function proximoMes(){
   const cur=g.mesIdx||5;
   const renda=(+g.rec.sal||0)+(g.rec.extras||[]).reduce((s,e)=>s+(+e.v||0),0);
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
-  const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
+  const cart=(g.cartoes_gastos||[]).reduce((s,c)=>s+(+c.fat||0),0);
 
   // Salvar no histórico
   if(!D.hist)D.hist=MESES.map(m=>({m,r:0,g:0}));
@@ -489,7 +507,7 @@ function proximoMes(){
     mesIdx:next,
     rec:{sal:0,extras:[]},
     fixas:g.fixas||[],
-    cart:{cred:0,deb:0}
+    cartoes_gastos:D.gastos.cartoes_gastos||[]
   };
   sv(D,'Mês salvo! Bem-vinda a '+MESES[next]);
   rGastos();
@@ -592,8 +610,7 @@ function editGastos(){
     fld('Salário','sal',g.rec.sal)+
     fsep('Despesas fixas')+
     (g.fixas||[]).map((f,i)=>fld(f.n,'fix'+i,f.v)).join('')+
-    fsep('Cartões')+
-    fld('Cartão de crédito','cred',g.cart.cred)+fld('Cartão de débito','deb',g.cart.deb));
+    '');  // cartões gerenciados separadamente
 }
 
 function editHist(i){
@@ -676,6 +693,48 @@ function removeExtra(i){
   sv(D,'');editReceitas();
 }
 
+function editCartoesGastos(){
+  mType='cartoes_gastos';mIdx=null;
+  const carts=D.gastos.cartoes_gastos||[];
+  openModal('Cartões do mês',
+    carts.map((c,i)=>`
+      <div style="background:#f9f9f9;border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Nome</label>
+            <input type="text" id="cn_${i}" value="${c.n}">
+          </div>
+          <button onclick="removeCartaoGastos(${i})" style="background:#fce4ec;border:none;border-radius:8px;padding:8px 10px;color:#c62828;font-size:16px;cursor:pointer;align-self:flex-end;flex-shrink:0">×</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Tipo</label>
+            <select id="ct_${i}">
+              <option value="credito" ${c.tipo==='credito'?'selected':''}>Crédito</option>
+              <option value="debito"  ${c.tipo==='debito'?'selected':''}>Débito</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Fatura / gasto (R$)</label>
+            <input type="number" id="cf_${i}" value="${c.fat||''}">
+          </div>
+        </div>
+      </div>`).join('')+
+    `<button onclick="addCartaoGastos()" style="width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:#0071e3;cursor:pointer;margin-top:4px">+ Adicionar cartão</button>`
+  );
+}
+
+function addCartaoGastos(){
+  if(!D.gastos.cartoes_gastos)D.gastos.cartoes_gastos=[];
+  D.gastos.cartoes_gastos.push({n:'Novo cartão',tipo:'credito',fat:0});
+  sv(D,'');editCartoesGastos();
+}
+
+function removeCartaoGastos(i){
+  D.gastos.cartoes_gastos.splice(i,1);
+  sv(D,'');editCartoesGastos();
+}
+
 function saveModal(){
   if(mType==='atv'){
     const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),a:gv('a')};
@@ -711,11 +770,19 @@ function saveModal(){
       }))
     };
     sv(D);closeModal();rGastos();return;
+  }else if(mType==='cartoes_gastos'){
+    const carts=D.gastos.cartoes_gastos||[];
+    D.gastos.cartoes_gastos=carts.map((c,i)=>({
+      n:document.getElementById('cn_'+i)?.value||c.n,
+      tipo:document.getElementById('ct_'+i)?.value||'credito',
+      fat:parseFloat(document.getElementById('cf_'+i)?.value)||0
+    }));
+    sv(D);closeModal();rGastos();return;
   }else if(mType==='gas'){
     D.gastos={...D.gastos,mes:gv('mes'),
       rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
       fixas:(D.gastos.fixas||[]).map((f,i)=>({n:f.n,v:gv('fix'+i)})),
-      cart:{cred:gv('cred'),deb:gv('deb')}};
+      cartoes_gastos:D.gastos.cartoes_gastos||[]};
   }else if(mType==='hist'){
     D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g')};
   }
