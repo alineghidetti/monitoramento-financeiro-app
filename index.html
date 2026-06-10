@@ -507,7 +507,7 @@ function proximoMes(){
     mesIdx:next,
     rec:{sal:0,extras:[]},
     fixas:g.fixas||[],
-    cartoes_gastos:D.gastos.cartoes_gastos||[]
+    cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0}))
   };
   sv(D,'Mês salvo! Bem-vinda a '+MESES[next]);
   rGastos();
@@ -782,7 +782,7 @@ function saveModal(){
     D.gastos={...D.gastos,mes:gv('mes'),
       rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
       fixas:(D.gastos.fixas||[]).map((f,i)=>({n:f.n,v:gv('fix'+i)})),
-      cartoes_gastos:D.gastos.cartoes_gastos||[]};
+      cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0}))};
   }else if(mType==='hist'){
     D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g')};
   }
