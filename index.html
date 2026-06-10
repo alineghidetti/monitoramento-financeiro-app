@@ -33,7 +33,7 @@ h1{font-size:22px;font-weight:600;padding:20px 16px 4px;max-width:430px;margin:0
 .rsub{font-size:11px;color:#8e8e93;text-align:right;margin-top:1px}
 .pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:3px}
 .pill-etf{background:#e8f0fe;color:#1558d6}.pill-bdr{background:#f0e8fe;color:#7b2cbf}
-.pill-acao{background:#e8f5e9;color:#2e7d32}.pill-rf{background:#fff3e0;color:#e65100}
+.pill-acao{background:#e8f5e9;color:#2e7d32}.pill-rf{background:#fff3e0;color:#e65100}.pill-crypto{background:#fff8e1;color:#f57f17}
 .bar-wrap{margin-bottom:10px}
 .bar-info{display:flex;justify-content:space-between;font-size:12px;color:#1a1a1e;margin-bottom:4px}
 .bar-info span:last-child{color:#8e8e93}
@@ -152,12 +152,7 @@ const INIT={
   cartoes_cc:[],
   ativos:[],
   rf:[],
-  metas:[
-    {c:'ETFs globais',d:'WRLD11 + IVVB11',    a:0.40},
-    {c:'BDRs / Tech', d:'NVDC34',             a:0.15},
-    {c:'Ações BR',    d:'ITUB4+WEGE3+PETR4', a:0.15},
-    {c:'Renda fixa',  d:'Caixinhas + títulos',a:0.30},
-  ],
+  crypto:[],
   gastos:{mes:'Jan/2025',mesIdx:0,
     rec:{sal:0,extras:[]},
     fixas:[],
@@ -409,15 +404,35 @@ function rCarteira(tab){
     </div>`;
   }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editMetas()">Editar metas</button>`;
 
+  const tc=D.crypto?D.crypto.reduce((s,c)=>s+(+c.v||0),0):0;
+  const cryptoHTML=(D.crypto||[]).map((c,i)=>`
+    <div class="row" onclick="editCrypto(${i})">
+      <div>
+        <div class="rticker">${c.s}</div>
+        <div class="rname">${c.n}</div>
+        <span class="pill pill-crypto">Crypto</span>
+      </div>
+      <div>
+        <div class="rval">${R(c.v)}</div>
+        <div class="rsub">${c.q} ${c.s}</div>
+        <div class="rsub">${tc>0?P(c.v/tc):'—'} do total crypto</div>
+      </div>
+    </div>`).join('')+
+    (D.crypto?.length?`<div class="row" style="cursor:default;justify-content:space-between">
+      <span style="font-size:13px;color:#8e8e93">Total em crypto</span>
+      <span style="font-size:14px;font-weight:600">${R(tc)}</span>
+    </div>`:'')
+    +`<button class="btn ghost" style="margin-top:4px" onclick="editCrypto(-1)">+ Adicionar criptomoeda</button>`;
+
   const tabs=[
-    {id:'bolsa',lbl:'Bolsa'},
-    {id:'rf',   lbl:'Renda fixa'},
-    {id:'bancos',lbl:'Bancos'},
+    {id:'bolsa',  lbl:'Bolsa'},
+    {id:'rf',     lbl:'Renda fixa'},
+    {id:'crypto', lbl:'Crypto'},
+    {id:'bancos', lbl:'Bancos'},
     {id:'cartoes',lbl:'Cartões'},
-    {id:'metas',lbl:'Metas'},
   ];
 
-  const content={bolsa:bolsaHTML,rf:rfHTML,bancos:bancosHTML,cartoes:cartoesHTML,metas:metasHTML};
+  const content={bolsa:bolsaHTML,rf:rfHTML,crypto:cryptoHTML,bancos:bancosHTML,cartoes:cartoesHTML};
 
   document.getElementById('p-carteira').innerHTML=`
   <div class="tabs" style="overflow-x:auto;gap:3px">
@@ -592,16 +607,6 @@ function editCartao(i){
     (i>=0?`<button class="del-btn" onclick="delIt('cartao',${i})">Remover cartão</button>`:''));
 }
 
-function editMetas(){
-  mType='metas';mIdx=null;
-  openModal('Metas de alocação',
-    D.metas.map((m,i)=>`
-      <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:.5px solid #f2f2f7">
-        <div style="font-size:12px;font-weight:500;color:#8e8e93;margin-bottom:4px">${m.c} — ${m.d}</div>
-        ${fld('% alvo (ex: 0.40)','m'+i,m.a)}
-      </div>`).join(''));
-}
-
 function editGastos(){
   mType='gas';mIdx=null;const g=D.gastos;
   openModal('Gastos — '+g.mes,
@@ -622,7 +627,8 @@ function editHist(i){
 function delIt(type,i){
   const labels={atv:'ativo',rf:'produto',banco:'banco',cartao:'cartão'};
   if(!confirm('Remover este '+labels[type]+'?'))return;
-  if(type==='atv')D.ativos.splice(i,1);
+  if(type==='crypto')D.crypto.splice(i,1);
+  else if(type==='atv')D.ativos.splice(i,1);
   else if(type==='rf')D.rf.splice(i,1);
   else if(type==='banco')D.bancos.splice(i,1);
   else if(type==='cartao')D.cartoes_cc.splice(i,1);
@@ -735,6 +741,18 @@ function removeCartaoGastos(i){
   sv(D,'');editCartoesGastos();
 }
 
+function editCrypto(i){
+  mType='crypto';mIdx=i;
+  const c=i>=0?D.crypto[i]:{s:'',n:'',q:0,pm:0,v:0};
+  openModal(i>=0?'Editar — '+c.s:'Nova criptomoeda',
+    fld('Símbolo (ex: BTC, ETH)','cs',c.s,'text')+
+    fld('Nome','cn',c.n,'text')+
+    fld('Quantidade','cq',c.q)+
+    fld('Preço médio (R$)','cpm',c.pm)+
+    fld('Valor atual (R$)','cv',c.v)+
+    (i>=0?`<button class="del-btn" onclick="delIt('crypto',${i})">Remover</button>`:''));
+}
+
 function saveModal(){
   if(mType==='atv'){
     const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),a:gv('a')};
@@ -750,16 +768,6 @@ function saveModal(){
     if(!D.cartoes_cc)D.cartoes_cc=[];
     const c={n:gv('n'),ban:gv('ban'),lim:gv('lim'),fat:gv('fat')};
     if(mIdx>=0)D.cartoes_cc[mIdx]=c;else D.cartoes_cc.push(c);
-  }else if(mType==='metas'){
-    D.metas.forEach((m,i)=>{m.a=gv('m'+i);});
-  }else if(mType==='fixas'){
-    const fixas=D.gastos.fixas||[];
-    D.gastos.fixas=fixas.map((f,i)=>{
-      const nome=document.getElementById('fn_'+i)?.value||f.n;
-      const val=parseFloat(document.getElementById('fv_'+i)?.value)||0;
-      return{n:nome,v:val};
-    });
-    sv(D);closeModal();rGastos();return;
   }else if(mType==='receitas'){
     const extras=D.gastos.rec.extras||[];
     D.gastos.rec={
