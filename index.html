@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Finanças</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1a1a1e;font-size:14px;padding-bottom:72px;min-height:100vh}
+.page{display:none;max-width:430px;margin:0 auto;padding:16px}
+.page.on{display:block}
+h1{font-size:22px;font-weight:600;padding:20px 16px 4px;max-width:430px;margin:0 auto;color:#1a1a1e}
+.sub{font-size:12px;color:#8e8e93;padding:0 16px 14px;max-width:430px;margin:0 auto}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;padding:14px 16px}
+.card.full{grid-column:1/-1}
+.card.dark{background:#1c1c1e;color:#fff}
+.clabel{font-size:11px;color:#8e8e93;margin-bottom:5px;letter-spacing:.02em}
+.card.dark .clabel{color:#636366}
+.cval{font-size:20px;font-weight:600;color:#1a1a1e;line-height:1.1}
+.card.dark .cval{color:#fff}
+.cval.blue{color:#0071e3}.cval.green{color:#30a14e}.cval.red{color:#d70015}
+.csub{font-size:11px;color:#8e8e93;margin-top:3px}
+.section{margin-bottom:20px}
+.slabel{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.slabel-add{font-size:11px;color:#0071e3;font-weight:600;cursor:pointer;letter-spacing:0}
+.row{background:#fff;border-radius:12px;padding:13px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.row:active{opacity:.7}
+.rticker{font-size:14px;font-weight:600;color:#1a1a1e}
+.rname{font-size:11px;color:#8e8e93;margin-top:1px}
+.rval{font-size:14px;font-weight:600;color:#1a1a1e;text-align:right}
+.rsub{font-size:11px;color:#8e8e93;text-align:right;margin-top:1px}
+.pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:3px}
+.pill-etf{background:#e8f0fe;color:#1558d6}.pill-bdr{background:#f0e8fe;color:#7b2cbf}
+.pill-acao{background:#e8f5e9;color:#2e7d32}.pill-rf{background:#fff3e0;color:#e65100}
+.bar-wrap{margin-bottom:10px}
+.bar-info{display:flex;justify-content:space-between;font-size:12px;color:#1a1a1e;margin-bottom:4px}
+.bar-info span:last-child{color:#8e8e93}
+.bar-bg{background:#e5e5ea;border-radius:3px;height:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.tabs{display:flex;background:#e5e5ea;border-radius:10px;padding:2px;margin-bottom:14px;gap:2px}
+.tab{flex:1;padding:7px 4px;border:none;background:none;font-size:12px;font-weight:500;color:#8e8e93;border-radius:8px;cursor:pointer}
+.tab.on{background:#fff;color:#1a1a1e}
+.block{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.block-title{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.grow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid #f2f2f7;font-size:13px}
+.grow:last-child{border-bottom:none}
+.grow .nome{color:#3c3c43}.grow .val{font-weight:500}
+.hist-header{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;padding:0 14px 6px;font-size:10px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.04em}
+.hist-header span:not(:first-child){text-align:right}
+.hist-row{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:6px;display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;align-items:center;cursor:pointer}
+.hist-row:active{opacity:.7}
+.hist-mes{font-size:13px;font-weight:600}
+.hist-v{font-size:12px;text-align:right;font-weight:500}
+.btn{width:100%;background:#0071e3;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn:active{opacity:.85}
+.btn.ghost{background:#f2f2f7;color:#3c3c43}
+.btn.green-btn{background:#30a14e}
+.btn.red-btn{background:#d70015}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);backdrop-filter:blur(10px);border-top:.5px solid #d1d1d6;display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:#8e8e93;font-size:10px;cursor:pointer}
+.nbtn.on{color:#0071e3}
+.nbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;overflow-y:auto;padding:24px 16px 40px}
+.overlay.on{display:block}
+.modal{background:#fff;border-radius:20px;max-width:398px;margin:0 auto;padding:20px}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;padding-right:28px}
+.mclose{float:right;margin-top:-4px;background:#f2f2f7;border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;color:#8e8e93}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;font-weight:500;color:#8e8e93;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select{width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px 12px;font-size:14px;color:#1a1a1e;outline:none}
+.field input:focus{box-shadow:0 0 0 3px rgba(0,113,227,.2)}
+.fsep{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px;padding-bottom:6px;border-bottom:.5px solid #f2f2f7}
+.del-btn{width:100%;background:none;border:none;color:#d70015;font-size:13px;font-weight:500;padding:10px;cursor:pointer;margin-top:2px}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-70px);background:#1a1a1e;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:none}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.legends{flex:1}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:#3c3c43;margin-bottom:8px}
+.ldot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.lpct{margin-left:auto;font-weight:600;color:#1a1a1e}
+.meta-row{background:#fff;border-radius:12px;padding:13px 14px;margin-bottom:6px}
+.meta-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.meta-name{font-size:13px;font-weight:600;flex-shrink:0}
+.meta-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.meta-alvo{font-size:11px;color:#8e8e93}
+.meta-real{font-size:13px;font-weight:600}
+.diff{font-size:11px;padding:2px 7px;border-radius:10px}
+.diff-ok{background:#e8f5e9;color:#2e7d32}.diff-neg{background:#fce4ec;color:#c62828}
+.meta-sub{font-size:11px;color:#8e8e93;margin-top:6px}
+.export-btn{background:rgba(142,142,147,.18);border:none;border-radius:8px;padding:6px 10px;font-size:11px;color:#8e8e93;cursor:pointer;backdrop-filter:blur(4px);display:block}
+.export-btn:active{opacity:.7}
+.next-mes-bar{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.next-mes-info{flex:1}
+.next-mes-label{font-size:11px;color:#8e8e93;margin-bottom:2px}
+.next-mes-val{font-size:15px;font-weight:600}
+.next-mes-btn{background:#0071e3;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.next-mes-btn:active{opacity:.85}
+.banco-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-right:10px}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div style="position:fixed;bottom:82px;right:14px;display:flex;flex-direction:column;gap:5px;z-index:40;align-items:flex-end">
+  <button class="export-btn" onclick="exportData()">&#8595; exportar</button>
+  <button class="export-btn" onclick="importData()">&#8593; importar</button>
+</div>
+
+<div id="pheader"></div>
+<div class="page on" id="p-visao"></div>
+<div class="page" id="p-carteira"></div>
+<div class="page" id="p-gastos"></div>
+<div class="page" id="p-historico"></div>
+
+<nav>
+  <button class="nbtn on" id="nb-visao" onclick="go('visao')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Visão geral
+  </button>
+  <button class="nbtn" id="nb-carteira" onclick="go('carteira')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Carteira
+  </button>
+  <button class="nbtn" id="nb-gastos" onclick="go('gastos')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+    Gastos
+  </button>
+  <button class="nbtn" id="nb-historico" onclick="go('historico')">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><polyline points="7 16 11 10 15 14 19 8"/></svg>
+    Histórico
+  </button>
+</nav>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="mclose" onclick="closeModal()">×</button>
+    <div class="modal-title" id="m-title"></div>
+    <div id="m-body"></div>
+    <button class="btn" style="margin-top:12px" onclick="saveModal()">Salvar</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const INIT={
+  conta:0,
+  bancos:[],
+  cartoes_cc:[],
+  ativos:[],
+  rf:[],
+  metas:[
+    {c:'ETFs globais',d:'WRLD11 + IVVB11',    a:0.40},
+    {c:'BDRs / Tech', d:'NVDC34',             a:0.15},
+    {c:'Ações BR',    d:'ITUB4+WEGE3+PETR4', a:0.15},
+    {c:'Renda fixa',  d:'Caixinhas + títulos',a:0.30},
+  ],
+  gastos:{mes:'Jan/2025',mesIdx:0,
+    rec:{sal:0,ext:0,div:0,out:0},
+    fixas:[],
+    cart:{cred:0,deb:0}},
+  hist:MESES.map(m=>({m,r:0,g:0}))
+};
+
+function ld(){try{const d=JSON.parse(localStorage.getItem('fd'));return d?Object.assign({},INIT,d):INIT}catch{return INIT}}
+function sv(d,msg){localStorage.setItem('fd',JSON.stringify(d));showToast(msg||'Salvo');}
+let D=ld();
+
+const R=v=>v==null||v===''||isNaN(+v)?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const P=v=>(+v*100).toFixed(1)+'%';
+const CL=['#0071e3','#5856d6','#30a14e','#ff9500','#d70015','#007aff','#af52de','#ff2d55'];
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+function exportData(){
+  const json=JSON.stringify(D,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='financas_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+  showToast('Backup exportado');
+}
+
+function importData(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        localStorage.setItem('fd',JSON.stringify(parsed));
+        D=parsed;
+        showToast('Dados restaurados com sucesso');
+        go(curPage);
+      }catch{
+        showToast('Arquivo inválido');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+let curPage='visao',curSub='bolsa',mType=null,mIdx=null;
+
+function go(p){
+  ['visao','carteira','gastos','historico'].forEach(id=>{
+    document.getElementById('p-'+id).classList.toggle('on',id===p);
+    document.getElementById('nb-'+id).classList.toggle('on',id===p);
+  });
+  curPage=p;
+  if(p==='visao')rVisao();
+  if(p==='carteira')rCarteira(curSub);
+  if(p==='gastos')rGastos();
+  if(p==='historico')rHistorico();
+}
+
+function rH(title,sub){
+  document.getElementById('pheader').innerHTML=
+    '<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
+}
+
+// ── VISÃO GERAL ──────────────────────────────────────────
+function rVisao(){
+  D=ld();
+  const tb=D.ativos.reduce((s,a)=>s+(+a.v||0),0);
+  const tr=D.rf.reduce((s,r)=>s+(+r.s||0),0);
+  const tt=tb+tr;
+  const saldo_bancos=D.bancos?D.bancos.reduce((s,b)=>s+(+b.s||0),0):0;
+  const fat_total=D.cartoes_cc?D.cartoes_cc.reduce((s,c)=>s+(+c.fat||0),0):0;
+  rH('Finanças',new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}));
+
+  document.getElementById('p-visao').innerHTML=`
+  <div class="cards">
+    <div class="card full dark">
+      <div class="clabel">Total investido</div>
+      <div class="cval" style="font-size:24px">${R(tt)}</div>
+      <div class="csub">Bolsa + Renda fixa</div>
+    </div>
+    <div class="card"><div class="clabel">Bolsa</div><div class="cval blue">${R(tb)}</div><div class="csub">${tt>0?P(tb/tt):'—'} do total</div></div>
+    <div class="card"><div class="clabel">Renda fixa</div><div class="cval green">${R(tr)}</div><div class="csub">${tt>0?P(tr/tt):'—'} do total</div></div>
+    <div class="card"><div class="clabel">Saldo em contas</div><div class="cval">${R(saldo_bancos)}</div><div class="csub">${(D.bancos||[]).length} banco${(D.bancos||[]).length!==1?'s':''}</div></div>
+    <div class="card"><div class="clabel">Faturas abertas</div><div class="cval red">${R(fat_total)}</div><div class="csub">${(D.cartoes_cc||[]).length} cartão${(D.cartoes_cc||[]).length!==1?'es':''}</div></div>
+  </div>
+
+  <div class="section">
+    <div class="slabel">Distribuição</div>
+    <div class="card">
+      <div class="donut-wrap">
+        <canvas id="dc" width="110" height="110" style="flex-shrink:0"></canvas>
+        <div class="legends" id="dleg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="slabel">Posições na bolsa</div>
+    ${D.ativos.filter(a=>+a.v>0).sort((a,b)=>b.v-a.v).map((a,i)=>{
+      const pp=tb>0?(+a.v/tb):0;
+      return`<div class="bar-wrap">
+        <div class="bar-info"><span style="font-weight:600">${a.t}</span><span>${R(a.v)} · ${P(pp)}</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${P(pp)};background:${CL[i%CL.length]}"></div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Donut
+  const cv=document.getElementById('dc');
+  if(!cv)return;
+  const cx=cv.getContext('2d'),cx2=55,cy2=55;
+  cx.clearRect(0,0,110,110);
+  const slices=[{v:tb,col:'#0071e3'},{v:tr,col:'#30a14e'}];
+  let st=-Math.PI/2;
+  slices.forEach(sl=>{
+    const ang=tt>0?(sl.v/tt)*2*Math.PI:Math.PI;
+    cx.beginPath();cx.moveTo(cx2,cy2);cx.arc(cx2,cy2,50,st,st+ang);cx.closePath();
+    cx.fillStyle=sl.col;cx.fill();st+=ang;
+  });
+  cx.beginPath();cx.arc(cx2,cy2,32,0,2*Math.PI);cx.fillStyle='#fff';cx.fill();
+
+  document.getElementById('dleg').innerHTML=[
+    {l:'Bolsa',v:tb,col:'#0071e3'},
+    {l:'Renda fixa',v:tr,col:'#30a14e'},
+  ].map(s=>`<div class="legend">
+    <span class="ldot" style="background:${s.col}"></span>
+    <span>${s.l}</span>
+    <span class="lpct">${tt>0?P(s.v/tt):'—'}</span>
+  </div>`).join('');
+}
+
+// ── CARTEIRA ────────────────────────────────────────────
+function rCarteira(tab){
+  D=ld();curSub=tab;
+  const tb=D.ativos.reduce((s,a)=>s+(+a.v||0),0);
+  const tr=D.rf.reduce((s,r)=>s+(+r.s||0),0);
+  const tt=tb+tr;
+  rH('Carteira','Toque para editar');
+  const pm={ETF:'pill-etf',BDR:'pill-bdr','Ação':'pill-acao'};
+
+  const bolsaHTML=D.ativos.map((a,i)=>{
+    if(!a.t)return'';
+    return`<div class="row" onclick="editAtivo(${i})">
+      <div><div class="rticker">${a.t}</div><div class="rname">${a.n}</div><span class="pill ${pm[a.c]||'pill-rf'}">${a.c}</span></div>
+      <div><div class="rval">${R(a.v)}</div><div class="rsub">${a.q} cotas · ${R(a.pm)}</div><div class="rsub">${tb>0?P(a.v/tb):'—'} da bolsa</div></div>
+    </div>`;
+  }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editAtivo(-1)">+ Adicionar ativo</button>`;
+
+  const rfHTML=D.rf.map((r,i)=>`
+    <div class="row" onclick="editRF(${i})">
+      <div><div class="rticker">${r.n}</div><div class="rname">${r.w} · ${r.tx}</div></div>
+      <div><div class="rval">${r.s?R(r.s):'—'}</div><div class="rsub">${tt>0&&r.s?P(r.s/tt):'—'} do total</div></div>
+    </div>`).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editRF(-1)">+ Adicionar produto</button>`;
+
+  // Bancos
+  const bancosHTML=(D.bancos||[]).map((b,i)=>{
+    const initials=b.n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    return`<div class="row" onclick="editBanco(${i})">
+      <div style="display:flex;align-items:center">
+        <div class="banco-icon" style="background:${b.cor||'#e5e5ea'};color:#fff">${initials}</div>
+        <div><div class="rticker">${b.n}</div></div>
+      </div>
+      <div><div class="rval">${R(b.s)}</div></div>
+    </div>`;
+  }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editBanco(-1)">+ Adicionar banco</button>`;
+
+  // Cartões
+  const cartoesHTML=(D.cartoes_cc||[]).map((c,i)=>`
+    <div class="row" onclick="editCartao(${i})">
+      <div>
+        <div class="rticker">${c.n}</div>
+        <div class="rname">${c.ban||'—'}</div>
+      </div>
+      <div>
+        <div class="rval red">${c.fat?R(c.fat):'—'}</div>
+        <div class="rsub">${c.lim?'Limite '+R(c.lim):''}</div>
+      </div>
+    </div>`).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editCartao(-1)">+ Adicionar cartão</button>`;
+
+  const metaVals=[
+    (+D.ativos[0]?.v||0)+(+D.ativos[2]?.v||0),
+    +D.ativos[1]?.v||0,
+    (+D.ativos[3]?.v||0)+(+D.ativos[4]?.v||0)+(+D.ativos[5]?.v||0),
+    tr,
+  ];
+  const metasHTML=D.metas.map((m,i)=>{
+    const real=tt>0?metaVals[i]/tt:0;
+    const diff=real-m.a;
+    const ok=Math.abs(diff)<0.02;
+    const falta=m.a*tt-metaVals[i];
+    return`<div class="meta-row">
+      <div class="meta-top">
+        <div class="meta-name">${m.c}</div>
+        <div class="meta-right">
+          <span class="meta-alvo">alvo ${P(m.a)}</span>
+          <span class="meta-real">${P(real)}</span>
+          <span class="diff ${ok?'diff-ok':'diff-neg'}">${diff>=0?'+':''}${P(diff)}</span>
+        </div>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${P(Math.min(real,1))};background:${CL[i]}"></div></div>
+      <div class="meta-sub">${m.d}${falta>0?' · aportar '+R(falta):' · meta atingida'}</div>
+    </div>`;
+  }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editMetas()">Editar metas</button>`;
+
+  const tabs=[
+    {id:'bolsa',lbl:'Bolsa'},
+    {id:'rf',   lbl:'Renda fixa'},
+    {id:'bancos',lbl:'Bancos'},
+    {id:'cartoes',lbl:'Cartões'},
+    {id:'metas',lbl:'Metas'},
+  ];
+
+  const content={bolsa:bolsaHTML,rf:rfHTML,bancos:bancosHTML,cartoes:cartoesHTML,metas:metasHTML};
+
+  document.getElementById('p-carteira').innerHTML=`
+  <div class="tabs" style="overflow-x:auto;gap:3px">
+    ${tabs.map(t=>`<button class="tab ${tab===t.id?'on':''}" onclick="rCarteira('${t.id}')" style="white-space:nowrap;min-width:60px">${t.lbl}</button>`).join('')}
+  </div>
+  ${content[tab]||''}`;
+}
+
+// ── GASTOS ──────────────────────────────────────────────
+function rGastos(){
+  D=ld();const g=D.gastos;
+  const renda=Object.values(g.rec).reduce((s,v)=>s+(+v||0),0);
+  const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
+  const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
+  const total=fix+cart;
+  const saldo=renda-total;
+  rH('Gastos',g.mes||'Jun/2025');
+
+  document.getElementById('p-gastos').innerHTML=`
+  <div class="next-mes-bar">
+    <div class="next-mes-info">
+      <div class="next-mes-label">Mês atual</div>
+      <div class="next-mes-val">${g.mes}</div>
+    </div>
+    <button class="next-mes-btn" onclick="proximoMes()">Próximo mês →</button>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="clabel">Renda</div><div class="cval green">${R(renda)}</div></div>
+    <div class="card"><div class="clabel">Gastos</div><div class="cval red">${R(total)}</div></div>
+    <div class="card full"><div class="clabel">Saldo livre</div><div class="cval blue" style="font-size:22px">${R(saldo)}</div></div>
+  </div>
+
+  <div class="block">
+    <div class="block-title">Receitas</div>
+    <div class="grow"><span class="nome">Salário</span><span class="val">${R(g.rec.sal)}</span></div>
+    <div class="grow"><span class="nome">Freelance / extra</span><span class="val">${R(g.rec.ext)}</span></div>
+    <div class="grow"><span class="nome">Dividendos</span><span class="val">${R(g.rec.div)}</span></div>
+    <div class="grow"><span class="nome">Outras</span><span class="val">${R(g.rec.out)}</span></div>
+  </div>
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="block-title" style="margin-bottom:0">Despesas fixas</div>
+      <span style="font-size:12px;color:#0071e3;font-weight:600;cursor:pointer" onclick="editFixas()">Gerenciar</span>
+    </div>
+    ${(g.fixas||[]).map(f=>`
+      <div class="grow"><span class="nome">${f.n}</span><span class="val">${R(f.v)}</span></div>
+    `).join('')}
+    ${!(g.fixas||[]).length?'<div style="font-size:13px;color:#8e8e93;text-align:center;padding:8px 0">Nenhuma despesa fixa</div>':''}
+  </div>
+  <div class="block">
+    <div class="block-title">Cartões</div>
+    <div class="grow"><span class="nome">Cartão de crédito</span><span class="val">${R(g.cart.cred)}</span></div>
+    <div class="grow"><span class="nome">Cartão de débito</span><span class="val">${R(g.cart.deb)}</span></div>
+  </div>
+  <button class="btn" onclick="editGastos()">Editar valores do mês</button>`;
+}
+
+function proximoMes(){
+  D=ld();
+  const g=D.gastos;
+  const cur=g.mesIdx||5;
+  const renda=Object.values(g.rec).reduce((s,v)=>s+(+v||0),0);
+  const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
+  const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
+
+  // Salvar no histórico
+  if(!D.hist)D.hist=MESES.map(m=>({m,r:0,g:0}));
+  D.hist[cur]={m:MESES[cur],r:renda,g:fix+cart};
+
+  // Avançar mês
+  const next=(cur+1)%12;
+  const ano=g.mes?g.mes.slice(-4):'2025';
+  const nextAno=next===0?String(+ano+1):ano;
+  D.gastos={
+    mes:MESES[next]+'/'+nextAno,
+    mesIdx:next,
+    rec:{sal:0,ext:0,div:0,out:0},
+    fixas:g.fixas||[],
+    cart:{cred:0,deb:0}
+  };
+  sv(D,'Mês salvo! Bem-vinda a '+MESES[next]);
+  rGastos();
+}
+
+// ── HISTÓRICO ───────────────────────────────────────────
+function rHistorico(){
+  D=ld();
+  rH('Histórico','Toque para editar');
+  document.getElementById('p-historico').innerHTML=`
+  <div class="hist-header">
+    <span>Mês</span><span>Renda</span><span>Gastos</span><span>Saldo</span>
+  </div>
+  ${(D.hist||[]).map((h,i)=>{
+    const s=(+h.r||0)-(+h.g||0);
+    const hasDat=h.r||h.g;
+    const sc=s>=0?'#30a14e':'#d70015';
+    return`<div class="hist-row" onclick="editHist(${i})">
+      <div class="hist-mes">${h.m}</div>
+      <div class="hist-v">${h.r?R(h.r):'—'}</div>
+      <div class="hist-v">${h.g?R(h.g):'—'}</div>
+      <div class="hist-v" style="color:${hasDat?sc:'#8e8e93'}">${hasDat?R(s):'—'}</div>
+    </div>`;
+  }).join('')}`;
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function fld(lbl,id,val,type='number'){
+  return`<div class="field"><label>${lbl}</label><input type="${type}" id="fi_${id}" value="${val??''}"></div>`;
+}
+function fsep(t){return`<div class="fsep">${t}</div>`;}
+function gv(id){const e=document.getElementById('fi_'+id);if(!e)return'';return e.type==='number'?parseFloat(e.value)||0:e.value;}
+
+// ── MODAIS ───────────────────────────────────────────────
+function openModal(title,body){
+  document.getElementById('m-title').textContent=title;
+  document.getElementById('m-body').innerHTML=body;
+  document.getElementById('overlay').classList.add('on');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
+
+function editAtivo(i){
+  mType='atv';mIdx=i;
+  const a=i>=0?D.ativos[i]:{t:'',n:'',c:'Ação',p:'',s:'',q:0,pm:0,v:0,a:0};
+  openModal(i>=0?'Editar — '+a.t:'Novo ativo',
+    fld('Ticker','t',a.t,'text')+fld('Nome','n',a.n,'text')+
+    fld('Classe (ETF/BDR/Ação)','c',a.c,'text')+fld('País','p',a.p,'text')+fld('Setor','s',a.s,'text')+
+    fld('Quantidade','q',a.q)+fld('Preço médio (R$)','pm',a.pm)+fld('Valor atual (R$)','v',a.v)+
+    fld('% alvo (ex: 0.40)','a',a.a)+
+    (i>=0?`<button class="del-btn" onclick="delIt('atv',${i})">Remover ativo</button>`:''));
+}
+
+function editRF(i){
+  mType='rf';mIdx=i;
+  const r=i>=0?D.rf[i]:{n:'',w:'',tp:'Pós-fixado',tx:'',s:0,a:0};
+  openModal(i>=0?'Editar — '+r.n:'Novo produto',
+    fld('Produto','n',r.n,'text')+fld('Onde fica','w',r.w,'text')+
+    fld('Tipo','tp',r.tp,'text')+fld('Taxa','tx',r.tx,'text')+
+    fld('Saldo atual (R$)','s',r.s)+fld('% alvo (ex: 0.30)','a',r.a)+
+    (i>=0?`<button class="del-btn" onclick="delIt('rf',${i})">Remover produto</button>`:''));
+}
+
+function editBanco(i){
+  mType='banco';mIdx=i;
+  const b=i>=0?D.bancos[i]:{n:'',cor:'#0071e3',s:0};
+  openModal(i>=0?'Editar — '+b.n:'Novo banco',
+    fld('Nome do banco','n',b.n,'text')+
+    fld('Cor (ex: #820ad1)','cor',b.cor,'text')+
+    fld('Saldo atual (R$)','s',b.s)+
+    (i>=0?`<button class="del-btn" onclick="delIt('banco',${i})">Remover banco</button>`:''));
+}
+
+function editCartao(i){
+  mType='cartao';mIdx=i;
+  const c=i>=0?D.cartoes_cc[i]:{n:'',ban:'',lim:0,fat:0};
+  openModal(i>=0?'Editar — '+c.n:'Novo cartão',
+    fld('Nome do cartão','n',c.n,'text')+
+    fld('Banco emissor','ban',c.ban,'text')+
+    fld('Limite (R$)','lim',c.lim)+
+    fld('Fatura atual (R$)','fat',c.fat)+
+    (i>=0?`<button class="del-btn" onclick="delIt('cartao',${i})">Remover cartão</button>`:''));
+}
+
+function editMetas(){
+  mType='metas';mIdx=null;
+  openModal('Metas de alocação',
+    D.metas.map((m,i)=>`
+      <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:.5px solid #f2f2f7">
+        <div style="font-size:12px;font-weight:500;color:#8e8e93;margin-bottom:4px">${m.c} — ${m.d}</div>
+        ${fld('% alvo (ex: 0.40)','m'+i,m.a)}
+      </div>`).join(''));
+}
+
+function editGastos(){
+  mType='gas';mIdx=null;const g=D.gastos;
+  openModal('Gastos — '+g.mes,
+    fld('Mês de referência','mes',g.mes,'text')+
+    fsep('Receitas')+
+    fld('Salário','sal',g.rec.sal)+fld('Freelance / extra','ext',g.rec.ext)+
+    fld('Dividendos','div',g.rec.div)+fld('Outras','out',g.rec.out)+
+    fsep('Despesas fixas')+
+    (g.fixas||[]).map((f,i)=>fld(f.n,'fix'+i,f.v)).join('')+
+    fsep('Cartões')+
+    fld('Cartão de crédito','cred',g.cart.cred)+fld('Cartão de débito','deb',g.cart.deb));
+}
+
+function editHist(i){
+  mType='hist';mIdx=i;const h=D.hist[i];
+  openModal('Histórico — '+h.m+'/2025',
+    fld('Renda total (R$)','r',h.r)+fld('Total gastos (R$)','g',h.g));
+}
+
+function delIt(type,i){
+  const labels={atv:'ativo',rf:'produto',banco:'banco',cartao:'cartão'};
+  if(!confirm('Remover este '+labels[type]+'?'))return;
+  if(type==='atv')D.ativos.splice(i,1);
+  else if(type==='rf')D.rf.splice(i,1);
+  else if(type==='banco')D.bancos.splice(i,1);
+  else if(type==='cartao')D.cartoes_cc.splice(i,1);
+  sv(D);closeModal();
+  if(curPage==='carteira')rCarteira(curSub);
+}
+
+function editFixas(){
+  mType='fixas';mIdx=null;
+  const fixas=D.gastos.fixas||[];
+  openModal('Despesas fixas',
+    fixas.map((f,i)=>`
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end">
+        <div class="field" style="flex:1;margin-bottom:0">
+          <label>Nome</label>
+          <input type="text" id="fn_${i}" value="${f.n}">
+        </div>
+        <div class="field" style="width:110px;margin-bottom:0">
+          <label>Valor (R$)</label>
+          <input type="number" id="fv_${i}" value="${f.v||''}">
+        </div>
+        <button onclick="removeFixa(${i})" style="background:#fce4ec;border:none;border-radius:8px;padding:10px;color:#c62828;font-size:16px;cursor:pointer;flex-shrink:0;height:38px;margin-bottom:0">×</button>
+      </div>`).join('')+
+    `<button onclick="addFixa()" style="width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:#0071e3;cursor:pointer;margin-top:4px">+ Adicionar despesa fixa</button>`
+  );
+}
+
+function addFixa(){
+  D.gastos.fixas=D.gastos.fixas||[];
+  D.gastos.fixas.push({n:'Nova despesa',v:0});
+  sv(D,'');editFixas();
+}
+
+function removeFixa(i){
+  D.gastos.fixas.splice(i,1);
+  sv(D,'');editFixas();
+}
+
+function saveModal(){
+  if(mType==='atv'){
+    const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),a:gv('a')};
+    if(mIdx>=0)D.ativos[mIdx]=a;else D.ativos.push(a);
+  }else if(mType==='rf'){
+    const r={n:gv('n'),w:gv('w'),tp:gv('tp'),tx:gv('tx'),s:gv('s'),a:gv('a')};
+    if(mIdx>=0)D.rf[mIdx]=r;else D.rf.push(r);
+  }else if(mType==='banco'){
+    if(!D.bancos)D.bancos=[];
+    const b={n:gv('n'),cor:gv('cor','text')||'#0071e3',s:gv('s')};
+    if(mIdx>=0)D.bancos[mIdx]=b;else D.bancos.push(b);
+  }else if(mType==='cartao'){
+    if(!D.cartoes_cc)D.cartoes_cc=[];
+    const c={n:gv('n'),ban:gv('ban'),lim:gv('lim'),fat:gv('fat')};
+    if(mIdx>=0)D.cartoes_cc[mIdx]=c;else D.cartoes_cc.push(c);
+  }else if(mType==='metas'){
+    D.metas.forEach((m,i)=>{m.a=gv('m'+i);});
+  }else if(mType==='fixas'){
+    const fixas=D.gastos.fixas||[];
+    D.gastos.fixas=fixas.map((f,i)=>{
+      const nome=document.getElementById('fn_'+i)?.value||f.n;
+      const val=parseFloat(document.getElementById('fv_'+i)?.value)||0;
+      return{n:nome,v:val};
+    });
+    sv(D);closeModal();rGastos();return;
+  }else if(mType==='gas'){
+    D.gastos={...D.gastos,mes:gv('mes'),
+      rec:{sal:gv('sal'),ext:gv('ext'),div:gv('div'),out:gv('out')},
+      fixas:(D.gastos.fixas||[]).map((f,i)=>({n:f.n,v:gv('fix'+i)})),
+      cart:{cred:gv('cred'),deb:gv('deb')}};
+  }else if(mType==='hist'){
+    D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g')};
+  }
+  sv(D);closeModal();
+  if(curPage==='visao')rVisao();
+  else if(curPage==='carteira')rCarteira(curSub);
+  else if(curPage==='gastos')rGastos();
+  else rHistorico();
+}
+
+rVisao();
+</script>
+</body>
+</html>
