@@ -189,6 +189,34 @@ function exportData(){
   showToast('Backup exportado');
 }
 
+function migrar(d){
+  // Converte formato antigo (fix como objeto) para novo (fixas como array)
+  if(d.gastos && d.gastos.fix && !d.gastos.fixas){
+    const map={
+      alug:'Aluguel / moradia',
+      sau:'Plano de saúde',
+      net:'Internet / telefone',
+      str:'Streaming',
+      ac:'Academia / outros',
+      par:'Parcelas fixas'
+    };
+    d.gastos.fixas=Object.entries(d.gastos.fix)
+      .filter(([k,v])=>v>0)
+      .map(([k,v])=>({n:map[k]||k,v:+v}));
+    delete d.gastos.fix;
+  }
+  // Garante que fixas existe
+  if(d.gastos && !d.gastos.fixas) d.gastos.fixas=[];
+  // Garante arrays existem
+  if(!d.bancos) d.bancos=[];
+  if(!d.cartoes_cc) d.cartoes_cc=[];
+  if(!d.ativos) d.ativos=[];
+  if(!d.rf) d.rf=[];
+  if(!d.metas) d.metas=INIT.metas;
+  if(!d.hist) d.hist=MESES.map(m=>({m,r:0,g:0}));
+  return d;
+}
+
 function importData(){
   const input=document.createElement('input');
   input.type='file';input.accept='.json';
@@ -198,7 +226,7 @@ function importData(){
     const reader=new FileReader();
     reader.onload=ev=>{
       try{
-        const parsed=JSON.parse(ev.target.result);
+        const parsed=migrar(JSON.parse(ev.target.result));
         localStorage.setItem('fd',JSON.stringify(parsed));
         D=parsed;
         showToast('Dados restaurados com sucesso');
