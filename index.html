@@ -159,7 +159,7 @@ const INIT={
     {c:'Renda fixa',  d:'Caixinhas + títulos',a:0.30},
   ],
   gastos:{mes:'Jan/2025',mesIdx:0,
-    rec:{sal:0,ext:0,div:0,out:0},
+    rec:{sal:0,extras:[]},
     fixas:[],
     cart:{cred:0,deb:0}},
   hist:MESES.map(m=>({m,r:0,g:0}))
@@ -420,7 +420,7 @@ function rCarteira(tab){
 // ── GASTOS ──────────────────────────────────────────────
 function rGastos(){
   D=ld();const g=D.gastos;
-  const renda=Object.values(g.rec).reduce((s,v)=>s+(+v||0),0);
+  const renda=(+g.rec.sal||0)+(g.rec.extras||[]).reduce((s,e)=>s+(+e.v||0),0);
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
   const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
   const total=fix+cart;
@@ -443,11 +443,12 @@ function rGastos(){
   </div>
 
   <div class="block">
-    <div class="block-title">Receitas</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="block-title" style="margin-bottom:0">Receitas</div>
+      <span style="font-size:12px;color:#0071e3;font-weight:600;cursor:pointer" onclick="editReceitas()">Gerenciar</span>
+    </div>
     <div class="grow"><span class="nome">Salário</span><span class="val">${R(g.rec.sal)}</span></div>
-    <div class="grow"><span class="nome">Freelance / extra</span><span class="val">${R(g.rec.ext)}</span></div>
-    <div class="grow"><span class="nome">Dividendos</span><span class="val">${R(g.rec.div)}</span></div>
-    <div class="grow"><span class="nome">Outras</span><span class="val">${R(g.rec.out)}</span></div>
+    ${(g.rec.extras||[]).map(e=>`<div class="grow"><span class="nome">${e.n}</span><span class="val">${R(e.v)}</span></div>`).join('')}
   </div>
   <div class="block">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -471,7 +472,7 @@ function proximoMes(){
   D=ld();
   const g=D.gastos;
   const cur=g.mesIdx||5;
-  const renda=Object.values(g.rec).reduce((s,v)=>s+(+v||0),0);
+  const renda=(+g.rec.sal||0)+(g.rec.extras||[]).reduce((s,e)=>s+(+e.v||0),0);
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
   const cart=Object.values(g.cart).reduce((s,v)=>s+(+v||0),0);
 
@@ -486,7 +487,7 @@ function proximoMes(){
   D.gastos={
     mes:MESES[next]+'/'+nextAno,
     mesIdx:next,
-    rec:{sal:0,ext:0,div:0,out:0},
+    rec:{sal:0,extras:[]},
     fixas:g.fixas||[],
     cart:{cred:0,deb:0}
   };
@@ -588,8 +589,7 @@ function editGastos(){
   openModal('Gastos — '+g.mes,
     fld('Mês de referência','mes',g.mes,'text')+
     fsep('Receitas')+
-    fld('Salário','sal',g.rec.sal)+fld('Freelance / extra','ext',g.rec.ext)+
-    fld('Dividendos','div',g.rec.div)+fld('Outras','out',g.rec.out)+
+    fld('Salário','sal',g.rec.sal)+
     fsep('Despesas fixas')+
     (g.fixas||[]).map((f,i)=>fld(f.n,'fix'+i,f.v)).join('')+
     fsep('Cartões')+
@@ -644,6 +644,38 @@ function removeFixa(i){
   sv(D,'');editFixas();
 }
 
+function editReceitas(){
+  mType='receitas';mIdx=null;
+  const extras=D.gastos.rec.extras||[];
+  openModal('Receitas',
+    `<div class="field"><label>Salário</label><input type="number" id="fi_sal" value="${D.gastos.rec.sal||''}"></div>`+
+    extras.map((e,i)=>`
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end">
+        <div class="field" style="flex:1;margin-bottom:0">
+          <label>Nome</label>
+          <input type="text" id="en_${i}" value="${e.n}">
+        </div>
+        <div class="field" style="width:110px;margin-bottom:0">
+          <label>Valor (R$)</label>
+          <input type="number" id="ev_${i}" value="${e.v||''}">
+        </div>
+        <button onclick="removeExtra(${i})" style="background:#fce4ec;border:none;border-radius:8px;padding:10px;color:#c62828;font-size:16px;cursor:pointer;flex-shrink:0;height:38px">×</button>
+      </div>`).join('')+
+    `<button onclick="addExtra()" style="width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:#0071e3;cursor:pointer;margin-top:4px">+ Adicionar receita</button>`
+  );
+}
+
+function addExtra(){
+  if(!D.gastos.rec.extras)D.gastos.rec.extras=[];
+  D.gastos.rec.extras.push({n:'Nova receita',v:0});
+  sv(D,'');editReceitas();
+}
+
+function removeExtra(i){
+  D.gastos.rec.extras.splice(i,1);
+  sv(D,'');editReceitas();
+}
+
 function saveModal(){
   if(mType==='atv'){
     const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),a:gv('a')};
@@ -669,9 +701,19 @@ function saveModal(){
       return{n:nome,v:val};
     });
     sv(D);closeModal();rGastos();return;
+  }else if(mType==='receitas'){
+    const extras=D.gastos.rec.extras||[];
+    D.gastos.rec={
+      sal:parseFloat(document.getElementById('fi_sal')?.value)||0,
+      extras:extras.map((e,i)=>({
+        n:document.getElementById('en_'+i)?.value||e.n,
+        v:parseFloat(document.getElementById('ev_'+i)?.value)||0
+      }))
+    };
+    sv(D);closeModal();rGastos();return;
   }else if(mType==='gas'){
     D.gastos={...D.gastos,mes:gv('mes'),
-      rec:{sal:gv('sal'),ext:gv('ext'),div:gv('div'),out:gv('out')},
+      rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
       fixas:(D.gastos.fixas||[]).map((f,i)=>({n:f.n,v:gv('fix'+i)})),
       cart:{cred:gv('cred'),deb:gv('deb')}};
   }else if(mType==='hist'){
