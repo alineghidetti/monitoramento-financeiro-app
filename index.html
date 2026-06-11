@@ -805,10 +805,17 @@ function saveModal(){
       fat:parseFloat(document.getElementById('cf_'+i)?.value)||0
     }));
     sv(D);closeModal();rGastos();return;
+  }else if(mType==='fixas'){
+    const fixas=D.gastos.fixas||[];
+    D.gastos.fixas=fixas.map((f,i)=>({
+      n:document.getElementById('fn_'+i)?.value||'',
+      v:parseFloat(document.getElementById('fv_'+i)?.value)||0,
+      auto:document.getElementById('fa_'+i)?.checked||false
+    }));
+    sv(D);closeModal();rGastos();return;
   }else if(mType==='gas'){
     D.gastos={...D.gastos,mes:gv('mes'),
       rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
-      fixas:(D.gastos.fixas||[]).map((f,i)=>({n:f.n,v:gv('fix'+i)})),
       cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0}))};
   }else if(mType==='hist'){
     D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g')};
