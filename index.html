@@ -34,6 +34,9 @@ h1{font-size:22px;font-weight:600;padding:20px 16px 4px;max-width:430px;margin:0
 .pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:3px}
 .pill-etf{background:#e8f0fe;color:#1558d6}.pill-bdr{background:#f0e8fe;color:#7b2cbf}
 .pill-acao{background:#e8f5e9;color:#2e7d32}.pill-rf{background:#fff3e0;color:#e65100}.pill-crypto{background:#fff8e1;color:#f57f17}
+.pill-rentab{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:2px}
+.pill-rentab.pos{background:#e8f5e9;color:#2e7d32}
+.pill-rentab.neg{background:#fce4ec;color:#c62828}
 .bar-wrap{margin-bottom:10px}
 .bar-info{display:flex;justify-content:space-between;font-size:12px;color:#1a1a1e;margin-bottom:4px}
 .bar-info span:last-child{color:#8e8e93}
@@ -47,12 +50,12 @@ h1{font-size:22px;font-weight:600;padding:20px 16px 4px;max-width:430px;margin:0
 .grow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid #f2f2f7;font-size:13px}
 .grow:last-child{border-bottom:none}
 .grow .nome{color:#3c3c43}.grow .val{font-weight:500}
-.hist-header{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;padding:0 14px 6px;font-size:10px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.04em}
+.hist-header{display:grid;grid-template-columns:44px 1fr 1fr 1fr 1fr;gap:4px;padding:0 14px 6px;font-size:10px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.04em}
 .hist-header span:not(:first-child){text-align:right}
-.hist-row{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:6px;display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:4px;align-items:center;cursor:pointer}
+.hist-row{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:6px;display:grid;grid-template-columns:44px 1fr 1fr 1fr 1fr;gap:4px;align-items:center;cursor:pointer}
 .hist-row:active{opacity:.7}
 .hist-mes{font-size:13px;font-weight:600}
-.hist-v{font-size:12px;text-align:right;font-weight:500}
+.hist-v{font-size:11px;text-align:right;font-weight:500}
 .btn{width:100%;background:#0071e3;color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
 .btn:active{opacity:.85}
 .btn.ghost{background:#f2f2f7;color:#3c3c43}
@@ -70,7 +73,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);back
 .field{margin-bottom:10px}
 .field label{display:block;font-size:11px;font-weight:500;color:#8e8e93;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
 .field input,.field select{width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px 12px;font-size:14px;color:#1a1a1e;outline:none}
-.field input:focus{box-shadow:0 0 0 3px rgba(0,113,227,.2)}
+.field input:focus,.field select:focus{box-shadow:0 0 0 3px rgba(0,113,227,.2)}
 .fsep{font-size:11px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px;padding-bottom:6px;border-bottom:.5px solid #f2f2f7}
 .del-btn{width:100%;background:none;border:none;color:#d70015;font-size:13px;font-weight:500;padding:10px;cursor:pointer;margin-top:2px}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-70px);background:#1a1a1e;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:none}
@@ -98,6 +101,14 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);back
 .next-mes-btn{background:#0071e3;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .next-mes-btn:active{opacity:.85}
 .banco-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-right:10px}
+.reserva-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.reserva-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.reserva-meses{font-size:26px;font-weight:700}
+.reserva-status{font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px}
+.reserva-status.ok{background:#e8f5e9;color:#2e7d32}
+.reserva-status.warn{background:#fff3e0;color:#e65100}
+.reserva-status.low{background:#fce4ec;color:#c62828}
+.spark-wrap{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -146,6 +157,16 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);back
 <script>
 const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+// Categorias de meta padrão. Cada ativo/produto de RF pode ser marcado com
+// um "meta" (nome da categoria) para ser somado corretamente, independente
+// da posição dele no array — corrige o bug antigo de índices fixos.
+const METAS_PADRAO=[
+  {c:'Renda Variável Brasil',a:0.35,d:'Ações e ETFs nacionais'},
+  {c:'Renda Variável Global',a:0.20,d:'ETFs e BDRs internacionais'},
+  {c:'Renda Fixa / Reserva',a:0.35,d:'Caixinhas, cofrinhos, CDB, Tesouro'},
+  {c:'Crypto',a:0.10,d:'Criptomoedas'},
+];
+
 const INIT={
   conta:0,
   bancos:[],
@@ -153,11 +174,12 @@ const INIT={
   ativos:[],
   rf:[],
   crypto:[],
+  metas:METAS_PADRAO,
   gastos:{mes:'Jan/2025',mesIdx:0,
     rec:{sal:0,extras:[]},
     fixas:[],
     cartoes_gastos:[]},
-  hist:MESES.map(m=>({m,r:0,g:0}))
+  hist:MESES.map(m=>({m,r:0,g:0,p:0}))
 };
 
 function ld(){try{const d=JSON.parse(localStorage.getItem('fd'));return d?Object.assign({},INIT,d):INIT}catch{return INIT}}
@@ -167,6 +189,20 @@ let D=ld();
 const R=v=>v==null||v===''||isNaN(+v)?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const P=v=>(+v*100).toFixed(1)+'%';
 const CL=['#0071e3','#5856d6','#30a14e','#ff9500','#d70015','#007aff','#af52de','#ff2d55'];
+
+// Calcula rentabilidade (%) de um ativo com base em preço médio x quantidade vs valor atual.
+// Retorna null se não houver dados suficientes (pm ou q ausentes/zerados).
+function rentab(pm,q,v){
+  const custo=(+pm||0)*(+q||0);
+  if(!custo||!v)return null;
+  return (+v/custo)-1;
+}
+function rentabBadge(pm,q,v){
+  const r=rentab(pm,q,v);
+  if(r==null)return'';
+  const pos=r>=0;
+  return `<span class="pill-rentab ${pos?'pos':'neg'}">${pos?'+':''}${(r*100).toFixed(1)}%</span>`;
+}
 
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -207,8 +243,13 @@ function migrar(d){
   if(!d.cartoes_cc) d.cartoes_cc=[];
   if(!d.ativos) d.ativos=[];
   if(!d.rf) d.rf=[];
-  if(!d.metas) d.metas=INIT.metas;
-  if(!d.hist) d.hist=MESES.map(m=>({m,r:0,g:0}));
+  if(!d.metas || !d.metas.length) d.metas=METAS_PADRAO;
+  if(!d.hist) d.hist=MESES.map(m=>({m,r:0,g:0,p:0}));
+  // Garante campo "p" (patrimônio) em cada mês do histórico
+  d.hist=d.hist.map(h=>({p:0,...h}));
+  // Garante campo "meta" em ativos e RF (categoria de alocação-alvo)
+  d.ativos=d.ativos.map(a=>({meta:'',...a}));
+  d.rf=d.rf.map(r=>({meta:'',...r}));
   // Migrar cart antigo
   if(d.gastos && d.gastos.cart && !d.gastos.cartoes_gastos){
     const cg=[];
@@ -218,8 +259,12 @@ function migrar(d){
     delete d.gastos.cart;
   }
   if(d.gastos && !d.gastos.cartoes_gastos) d.gastos.cartoes_gastos=[];
+  if(!d.crypto) d.crypto=[];
   return d;
 }
+
+// Roda a migração já nos dados carregados na inicialização
+D=migrar(D);
 
 function importData(){
   const input=document.createElement('input');
@@ -230,7 +275,7 @@ function importData(){
     const reader=new FileReader();
     reader.onload=ev=>{
       try{
-        const parsed=migrar(JSON.parse(ev.target.result));
+        const parsed=migrar(Object.assign({},INIT,JSON.parse(ev.target.result)));
         localStorage.setItem('fd',JSON.stringify(parsed));
         D=parsed;
         showToast('Dados restaurados com sucesso');
@@ -263,6 +308,13 @@ function rH(title,sub){
     '<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
 }
 
+// Soma das despesas fixas mensais que realmente saem do saldo (não-automáticas,
+// já que as "auto" já estão contabilizadas dentro da fatura do cartão)
+function despesasFixasMensais(){
+  return (D.gastos.fixas||[]).filter(f=>!f.auto).reduce((s,f)=>s+(+f.v||0),0)
+       + (D.gastos.cartoes_gastos||[]).reduce((s,c)=>s+(+c.fat||0),0);
+}
+
 // ── VISÃO GERAL ──────────────────────────────────────────
 function rVisao(){
   D=ld();
@@ -272,6 +324,17 @@ function rVisao(){
   const saldo_bancos=D.bancos?D.bancos.reduce((s,b)=>s+(+b.s||0),0):0;
   const fat_total=D.cartoes_cc?D.cartoes_cc.reduce((s,c)=>s+(+c.fat||0),0):0;
   rH('Finanças',new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}));
+
+  // ── Reserva de emergência (em meses de despesas fixas) ──
+  const liquidez=saldo_bancos+tr; // considera saldo em conta + tudo em "renda fixa/caixinhas" como líquido
+  const despesasMes=despesasFixasMensais();
+  const mesesReserva=despesasMes>0?liquidez/despesasMes:null;
+  let statusClass='ok',statusLbl='Confortável';
+  if(mesesReserva!=null){
+    if(mesesReserva<3){statusClass='low';statusLbl='Abaixo do recomendado';}
+    else if(mesesReserva<6){statusClass='warn';statusLbl='Razoável';}
+    else{statusClass='ok';statusLbl='Confortável';}
+  }
 
   document.getElementById('p-visao').innerHTML=`
   <div class="cards">
@@ -284,6 +347,19 @@ function rVisao(){
     <div class="card"><div class="clabel">Renda fixa</div><div class="cval green">${R(tr)}</div><div class="csub">${tt>0?P(tr/tt):'—'} do total</div></div>
     <div class="card"><div class="clabel">Saldo em contas</div><div class="cval">${R(saldo_bancos)}</div><div class="csub">${(D.bancos||[]).length} banco${(D.bancos||[]).length!==1?'s':''}</div></div>
     <div class="card"><div class="clabel">Faturas abertas</div><div class="cval red">${R(fat_total)}</div><div class="csub">${(D.cartoes_cc||[]).length} cartão${(D.cartoes_cc||[]).length!==1?'es':''}</div></div>
+  </div>
+
+  <div class="section">
+    <div class="slabel">Reserva de emergência</div>
+    <div class="reserva-card">
+      <div class="reserva-top">
+        <div>
+          <div class="reserva-meses">${mesesReserva!=null?mesesReserva.toFixed(1):'—'} <span style="font-size:13px;font-weight:500;color:#8e8e93">meses</span></div>
+        </div>
+        <span class="reserva-status ${statusClass}">${mesesReserva!=null?statusLbl:'Cadastre despesas fixas'}</span>
+      </div>
+      <div class="csub">${R(liquidez)} líquidos ÷ ${despesasMes>0?R(despesasMes)+' de despesas fixas/mês':'defina despesas fixas em Gastos'}</div>
+    </div>
   </div>
 
   <div class="section">
@@ -301,34 +377,68 @@ function rVisao(){
     ${D.ativos.filter(a=>+a.v>0).sort((a,b)=>b.v-a.v).map((a,i)=>{
       const pp=tb>0?(+a.v/tb):0;
       return`<div class="bar-wrap">
-        <div class="bar-info"><span style="font-weight:600">${a.t}</span><span>${R(a.v)} · ${P(pp)}</span></div>
+        <div class="bar-info"><span style="font-weight:600">${a.t} ${rentabBadge(a.pm,a.q,a.v)}</span><span>${R(a.v)} · ${P(pp)}</span></div>
         <div class="bar-bg"><div class="bar-fill" style="width:${P(pp)};background:${CL[i%CL.length]}"></div></div>
       </div>`;
     }).join('')}
-  </div>`;
+  </div>
+
+  ${D.hist.filter(h=>h.p>0).length>1?`
+  <div class="section">
+    <div class="slabel">Evolução do patrimônio</div>
+    <div class="spark-wrap">
+      <canvas id="spark" width="380" height="90" style="width:100%;height:90px"></canvas>
+    </div>
+  </div>`:''}`;
 
   // Donut
   const cv=document.getElementById('dc');
-  if(!cv)return;
-  const cx=cv.getContext('2d'),cx2=55,cy2=55;
-  cx.clearRect(0,0,110,110);
-  const slices=[{v:tb,col:'#0071e3'},{v:tr,col:'#30a14e'}];
-  let st=-Math.PI/2;
-  slices.forEach(sl=>{
-    const ang=tt>0?(sl.v/tt)*2*Math.PI:Math.PI;
-    cx.beginPath();cx.moveTo(cx2,cy2);cx.arc(cx2,cy2,50,st,st+ang);cx.closePath();
-    cx.fillStyle=sl.col;cx.fill();st+=ang;
-  });
-  cx.beginPath();cx.arc(cx2,cy2,32,0,2*Math.PI);cx.fillStyle='#fff';cx.fill();
+  if(cv){
+    const cx=cv.getContext('2d'),cx2=55,cy2=55;
+    cx.clearRect(0,0,110,110);
+    const slices=[{v:tb,col:'#0071e3'},{v:tr,col:'#30a14e'}];
+    let st=-Math.PI/2;
+    slices.forEach(sl=>{
+      const ang=tt>0?(sl.v/tt)*2*Math.PI:Math.PI;
+      cx.beginPath();cx.moveTo(cx2,cy2);cx.arc(cx2,cy2,50,st,st+ang);cx.closePath();
+      cx.fillStyle=sl.col;cx.fill();st+=ang;
+    });
+    cx.beginPath();cx.arc(cx2,cy2,32,0,2*Math.PI);cx.fillStyle='#fff';cx.fill();
 
-  document.getElementById('dleg').innerHTML=[
-    {l:'Bolsa',v:tb,col:'#0071e3'},
-    {l:'Renda fixa',v:tr,col:'#30a14e'},
-  ].map(s=>`<div class="legend">
-    <span class="ldot" style="background:${s.col}"></span>
-    <span>${s.l}</span>
-    <span class="lpct">${tt>0?P(s.v/tt):'—'}</span>
-  </div>`).join('');
+    document.getElementById('dleg').innerHTML=[
+      {l:'Bolsa',v:tb,col:'#0071e3'},
+      {l:'Renda fixa',v:tr,col:'#30a14e'},
+    ].map(s=>`<div class="legend">
+      <span class="ldot" style="background:${s.col}"></span>
+      <span>${s.l}</span>
+      <span class="lpct">${tt>0?P(s.v/tt):'—'}</span>
+    </div>`).join('');
+  }
+
+  // Sparkline de evolução do patrimônio (usa histórico salvo mês a mês)
+  const sp=document.getElementById('spark');
+  if(sp){
+    const pts=D.hist.filter(h=>h.p>0).map(h=>h.p);
+    const ctx=sp.getContext('2d');
+    const w=sp.width,h=sp.height,pad=8;
+    ctx.clearRect(0,0,w,h);
+    if(pts.length>1){
+      const mn=Math.min(...pts),mx=Math.max(...pts);
+      const rng=(mx-mn)||1;
+      ctx.beginPath();
+      pts.forEach((v,i)=>{
+        const x=pad+(i/(pts.length-1))*(w-pad*2);
+        const y=h-pad-((v-mn)/rng)*(h-pad*2);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle='#0071e3';ctx.lineWidth=2;ctx.stroke();
+      pts.forEach((v,i)=>{
+        const x=pad+(i/(pts.length-1))*(w-pad*2);
+        const y=h-pad-((v-mn)/rng)*(h-pad*2);
+        ctx.beginPath();ctx.arc(x,y,3,0,2*Math.PI);ctx.fillStyle='#0071e3';ctx.fill();
+      });
+    }
+  }
 }
 
 // ── CARTEIRA ────────────────────────────────────────────
@@ -344,7 +454,7 @@ function rCarteira(tab){
     if(!a.t)return'';
     return`<div class="row" onclick="editAtivo(${i})">
       <div><div class="rticker">${a.t}</div><div class="rname">${a.n}</div><span class="pill ${pm[a.c]||'pill-rf'}">${a.c}</span></div>
-      <div><div class="rval">${R(a.v)}</div><div class="rsub">${a.q} cotas · ${R(a.pm)}</div><div class="rsub">${tb>0?P(a.v/tb):'—'} da bolsa</div></div>
+      <div><div class="rval">${R(a.v)}</div><div>${rentabBadge(a.pm,a.q,a.v)}</div><div class="rsub">${a.q} cotas · ${R(a.pm)}</div><div class="rsub">${tb>0?P(a.v/tb):'—'} da bolsa</div></div>
     </div>`;
   }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editAtivo(-1)">+ Adicionar ativo</button>`;
 
@@ -379,17 +489,23 @@ function rCarteira(tab){
       </div>
     </div>`).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editCartao(-1)">+ Adicionar cartão</button>`;
 
-  const metaVals=[
-    (+D.ativos[0]?.v||0)+(+D.ativos[2]?.v||0),
-    +D.ativos[1]?.v||0,
-    (+D.ativos[3]?.v||0)+(+D.ativos[4]?.v||0)+(+D.ativos[5]?.v||0),
-    tr,
-  ];
+  // Metas — agora somadas pelo campo "meta" de cada ativo/produto de RF,
+  // e não mais por posição fixa no array (bug corrigido).
+  const metaTotals={};
+  D.metas.forEach(m=>metaTotals[m.c]=0);
+  D.ativos.forEach(a=>{ if(a.meta && metaTotals[a.meta]!=null) metaTotals[a.meta]+=(+a.v||0); });
+  D.rf.forEach(r=>{ if(r.meta && metaTotals[r.meta]!=null) metaTotals[r.meta]+=(+r.s||0); });
+  const tc=D.crypto?D.crypto.reduce((s,c)=>s+(+c.v||0),0):0;
+  D.crypto.forEach(c=>{ if(c.meta && metaTotals[c.meta]!=null) metaTotals[c.meta]+=(+c.v||0); });
+  const ttGeral=tt+tc;
+  const semCategoria=ttGeral-Object.values(metaTotals).reduce((s,v)=>s+v,0);
+
   const metasHTML=D.metas.map((m,i)=>{
-    const real=tt>0?metaVals[i]/tt:0;
+    const val=metaTotals[m.c]||0;
+    const real=ttGeral>0?val/ttGeral:0;
     const diff=real-m.a;
     const ok=Math.abs(diff)<0.02;
-    const falta=m.a*tt-metaVals[i];
+    const falta=m.a*ttGeral-val;
     return`<div class="meta-row">
       <div class="meta-top">
         <div class="meta-name">${m.c}</div>
@@ -399,12 +515,13 @@ function rCarteira(tab){
           <span class="diff ${ok?'diff-ok':'diff-neg'}">${diff>=0?'+':''}${P(diff)}</span>
         </div>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${P(Math.min(real,1))};background:${CL[i]}"></div></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${P(Math.min(real,1))};background:${CL[i%CL.length]}"></div></div>
       <div class="meta-sub">${m.d}${falta>0?' · aportar '+R(falta):' · meta atingida'}</div>
     </div>`;
-  }).join('')+`<button class="btn ghost" style="margin-top:4px" onclick="editMetas()">Editar metas</button>`;
+  }).join('')
+  +(semCategoria>0.5?`<div class="meta-sub" style="padding:0 4px;color:#e65100">⚠ ${R(semCategoria)} sem categoria de meta atribuída — edite os ativos e escolha uma categoria.</div>`:'')
+  +`<button class="btn ghost" style="margin-top:4px" onclick="editMetas()">Editar metas</button>`;
 
-  const tc=D.crypto?D.crypto.reduce((s,c)=>s+(+c.v||0),0):0;
   const cryptoHTML=(D.crypto||[]).map((c,i)=>`
     <div class="row" onclick="editCrypto(${i})">
       <div>
@@ -414,6 +531,7 @@ function rCarteira(tab){
       </div>
       <div>
         <div class="rval">${R(c.v)}</div>
+        <div>${rentabBadge(c.pm,c.q,c.v)}</div>
         <div class="rsub">${c.q} ${c.s}</div>
         <div class="rsub">${tc>0?P(c.v/tc):'—'} do total crypto</div>
       </div>
@@ -430,9 +548,10 @@ function rCarteira(tab){
     {id:'crypto', lbl:'Crypto'},
     {id:'bancos', lbl:'Bancos'},
     {id:'cartoes',lbl:'Cartões'},
+    {id:'metas',  lbl:'Metas'},
   ];
 
-  const content={bolsa:bolsaHTML,rf:rfHTML,crypto:cryptoHTML,bancos:bancosHTML,cartoes:cartoesHTML};
+  const content={bolsa:bolsaHTML,rf:rfHTML,crypto:cryptoHTML,bancos:bancosHTML,cartoes:cartoesHTML,metas:metasHTML};
 
   document.getElementById('p-carteira').innerHTML=`
   <div class="tabs" style="overflow-x:auto;gap:3px">
@@ -520,9 +639,14 @@ function proximoMes(){
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
   const cart=(g.cartoes_gastos||[]).reduce((s,c)=>s+(+c.fat||0),0);
 
-  // Salvar no histórico
-  if(!D.hist)D.hist=MESES.map(m=>({m,r:0,g:0}));
-  D.hist[cur]={m:MESES[cur],r:renda,g:fix+cart};
+  // Patrimônio total no momento da virada de mês (bolsa + renda fixa)
+  const tb=D.ativos.reduce((s,a)=>s+(+a.v||0),0);
+  const tr=D.rf.reduce((s,r)=>s+(+r.s||0),0);
+  const patrimonio=tb+tr;
+
+  // Salvar no histórico (renda, gastos e patrimônio do mês que está encerrando)
+  if(!D.hist)D.hist=MESES.map(m=>({m,r:0,g:0,p:0}));
+  D.hist[cur]={m:MESES[cur],r:renda,g:fix+cart,p:patrimonio};
 
   // Avançar mês
   const next=(cur+1)%12;
@@ -545,7 +669,7 @@ function rHistorico(){
   rH('Histórico','Toque para editar');
   document.getElementById('p-historico').innerHTML=`
   <div class="hist-header">
-    <span>Mês</span><span>Renda</span><span>Gastos</span><span>Saldo</span>
+    <span>Mês</span><span>Renda</span><span>Gastos</span><span>Saldo</span><span>Patrim.</span>
   </div>
   ${(D.hist||[]).map((h,i)=>{
     const s=(+h.r||0)-(+h.g||0);
@@ -556,6 +680,7 @@ function rHistorico(){
       <div class="hist-v">${h.r?R(h.r):'—'}</div>
       <div class="hist-v">${h.g?R(h.g):'—'}</div>
       <div class="hist-v" style="color:${hasDat?sc:'#8e8e93'}">${hasDat?R(s):'—'}</div>
+      <div class="hist-v" style="color:#0071e3">${h.p?R(h.p):'—'}</div>
     </div>`;
   }).join('')}`;
 }
@@ -563,6 +688,12 @@ function rHistorico(){
 // ── HELPERS ──────────────────────────────────────────────
 function fld(lbl,id,val,type='number'){
   return`<div class="field"><label>${lbl}</label><input type="${type}" id="fi_${id}" value="${val??''}"></div>`;
+}
+function fldSelect(lbl,id,val,options){
+  return`<div class="field"><label>${lbl}</label><select id="fi_${id}">
+    <option value="">— nenhuma —</option>
+    ${options.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+  </select></div>`;
 }
 function fsep(t){return`<div class="fsep">${t}</div>`;}
 function gv(id){const e=document.getElementById('fi_'+id);if(!e)return'';return e.type==='number'?parseFloat(e.value)||0:e.value;}
@@ -578,22 +709,23 @@ document.getElementById('overlay').addEventListener('click',e=>{if(e.target===do
 
 function editAtivo(i){
   mType='atv';mIdx=i;
-  const a=i>=0?D.ativos[i]:{t:'',n:'',c:'Ação',p:'',s:'',q:0,pm:0,v:0,a:0};
+  const a=i>=0?D.ativos[i]:{t:'',n:'',c:'Ação',p:'',s:'',q:0,pm:0,v:0,meta:''};
   openModal(i>=0?'Editar — '+a.t:'Novo ativo',
     fld('Ticker','t',a.t,'text')+fld('Nome','n',a.n,'text')+
     fld('Classe (ETF/BDR/Ação)','c',a.c,'text')+fld('País','p',a.p,'text')+fld('Setor','s',a.s,'text')+
     fld('Quantidade','q',a.q)+fld('Preço médio (R$)','pm',a.pm)+fld('Valor atual (R$)','v',a.v)+
-    fld('% alvo (ex: 0.40)','a',a.a)+
+    fldSelect('Categoria de meta','meta',a.meta,D.metas.map(m=>m.c))+
     (i>=0?`<button class="del-btn" onclick="delIt('atv',${i})">Remover ativo</button>`:''));
 }
 
 function editRF(i){
   mType='rf';mIdx=i;
-  const r=i>=0?D.rf[i]:{n:'',w:'',tp:'Pós-fixado',tx:'',s:0,a:0};
+  const r=i>=0?D.rf[i]:{n:'',w:'',tp:'Pós-fixado',tx:'',s:0,meta:''};
   openModal(i>=0?'Editar — '+r.n:'Novo produto',
     fld('Produto','n',r.n,'text')+fld('Onde fica','w',r.w,'text')+
     fld('Tipo','tp',r.tp,'text')+fld('Taxa','tx',r.tx,'text')+
-    fld('Saldo atual (R$)','s',r.s)+fld('% alvo (ex: 0.30)','a',r.a)+
+    fld('Saldo atual (R$)','s',r.s)+
+    fldSelect('Categoria de meta','meta',r.meta,D.metas.map(m=>m.c))+
     (i>=0?`<button class="del-btn" onclick="delIt('rf',${i})">Remover produto</button>`:''));
 }
 
@@ -631,8 +763,49 @@ function editGastos(){
 
 function editHist(i){
   mType='hist';mIdx=i;const h=D.hist[i];
-  openModal('Histórico — '+h.m+'/2025',
-    fld('Renda total (R$)','r',h.r)+fld('Total gastos (R$)','g',h.g));
+  openModal('Histórico — '+h.m,
+    fld('Renda total (R$)','r',h.r)+fld('Total gastos (R$)','g',h.g)+fld('Patrimônio total (R$)','p',h.p));
+}
+
+// ── METAS ────────────────────────────────────────────────
+function editMetas(){
+  mType='metas';mIdx=null;
+  openModal('Metas de alocação',
+    D.metas.map((m,i)=>`
+      <div style="background:#f9f9f9;border-radius:10px;padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Categoria</label>
+            <input type="text" id="mn_${i}" value="${m.c||''}" placeholder="Ex: Renda Variável Brasil">
+          </div>
+          <div class="field" style="width:90px;margin-bottom:0">
+            <label>Alvo (%)</label>
+            <input type="number" id="ma_${i}" value="${((m.a||0)*100).toFixed(0)}" placeholder="35">
+          </div>
+          <button onclick="removeMeta(${i})" style="background:#fce4ec;border:none;border-radius:8px;padding:8px 10px;color:#c62828;font-size:16px;cursor:pointer;align-self:flex-end;flex-shrink:0">×</button>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Descrição</label>
+          <input type="text" id="md_${i}" value="${m.d||''}" placeholder="O que entra nessa categoria">
+        </div>
+      </div>`).join('')+
+    `<button onclick="addMeta()" style="width:100%;background:#f2f2f7;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:#0071e3;cursor:pointer;margin-top:4px">+ Adicionar categoria</button>
+    <div style="font-size:11px;color:#8e8e93;margin-top:10px">Depois de criar/renomear categorias, edite cada ativo (aba Bolsa/Renda fixa/Crypto) e escolha a categoria de meta correspondente.</div>`
+  );
+}
+
+function addMeta(){
+  D.metas.push({c:'',a:0,d:''});
+  sv(D,'');editMetas();
+}
+function removeMeta(i){
+  const nomeAntigo=D.metas[i].c;
+  D.metas.splice(i,1);
+  // Limpa referências a essa categoria nos ativos/RF/crypto para não ficar "orfã"
+  D.ativos.forEach(a=>{ if(a.meta===nomeAntigo) a.meta=''; });
+  D.rf.forEach(r=>{ if(r.meta===nomeAntigo) r.meta=''; });
+  D.crypto.forEach(c=>{ if(c.meta===nomeAntigo) c.meta=''; });
+  sv(D,'');editMetas();
 }
 
 function delIt(type,i){
@@ -762,22 +935,23 @@ function removeCartaoGastos(i){
 
 function editCrypto(i){
   mType='crypto';mIdx=i;
-  const c=i>=0?D.crypto[i]:{s:'',n:'',q:0,pm:0,v:0};
+  const c=i>=0?D.crypto[i]:{s:'',n:'',q:0,pm:0,v:0,meta:''};
   openModal(i>=0?'Editar — '+c.s:'Nova criptomoeda',
     fld('Símbolo (ex: BTC, ETH)','cs',c.s,'text')+
     fld('Nome','cn',c.n,'text')+
     fld('Quantidade','cq',c.q)+
     fld('Preço médio (R$)','cpm',c.pm)+
     fld('Valor atual (R$)','cv',c.v)+
+    fldSelect('Categoria de meta','cmeta',c.meta,D.metas.map(m=>m.c))+
     (i>=0?`<button class="del-btn" onclick="delIt('crypto',${i})">Remover</button>`:''));
 }
 
 function saveModal(){
   if(mType==='atv'){
-    const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),a:gv('a')};
+    const a={t:gv('t'),n:gv('n'),c:gv('c'),p:gv('p'),s:gv('s'),q:gv('q'),pm:gv('pm'),v:gv('v'),meta:gv('meta')};
     if(mIdx>=0)D.ativos[mIdx]=a;else D.ativos.push(a);
   }else if(mType==='rf'){
-    const r={n:gv('n'),w:gv('w'),tp:gv('tp'),tx:gv('tx'),s:gv('s'),a:gv('a')};
+    const r={n:gv('n'),w:gv('w'),tp:gv('tp'),tx:gv('tx'),s:gv('s'),meta:gv('meta')};
     if(mIdx>=0)D.rf[mIdx]=r;else D.rf.push(r);
   }else if(mType==='banco'){
     if(!D.bancos)D.bancos=[];
@@ -787,6 +961,16 @@ function saveModal(){
     if(!D.cartoes_cc)D.cartoes_cc=[];
     const c={n:gv('n'),ban:gv('ban'),lim:gv('lim'),fat:gv('fat')};
     if(mIdx>=0)D.cartoes_cc[mIdx]=c;else D.cartoes_cc.push(c);
+  }else if(mType==='crypto'){
+    const c={s:gv('cs'),n:gv('cn'),q:gv('cq'),pm:gv('cpm'),v:gv('cv'),meta:gv('cmeta')};
+    if(mIdx>=0)D.crypto[mIdx]=c;else D.crypto.push(c);
+  }else if(mType==='metas'){
+    D.metas=D.metas.map((m,i)=>({
+      c:document.getElementById('mn_'+i)?.value||m.c,
+      a:(parseFloat(document.getElementById('ma_'+i)?.value)||0)/100,
+      d:document.getElementById('md_'+i)?.value||''
+    }));
+    sv(D);closeModal();rCarteira('metas');return;
   }else if(mType==='receitas'){
     const extras=D.gastos.rec.extras||[];
     D.gastos.rec={
@@ -818,7 +1002,7 @@ function saveModal(){
       rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
       cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0}))};
   }else if(mType==='hist'){
-    D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g')};
+    D.hist[mIdx]={m:D.hist[mIdx].m,r:gv('r'),g:gv('g'),p:gv('p')};
   }
   sv(D);closeModal();
   if(curPage==='visao')rVisao();
