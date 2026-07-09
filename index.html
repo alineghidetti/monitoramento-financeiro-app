@@ -163,6 +163,8 @@ const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','
 // Categorias de meta padrão. Cada ativo/produto de RF pode ser marcado com
 // um "meta" (nome da categoria) para ser somado corretamente, independente
 // da posição dele no array — corrige o bug antigo de índices fixos.
+const CATEGORIAS_GASTO=['Alimentação','Transporte','Compras','Saúde','Assinaturas','Lazer','Viagem','Moradia','Educação','Outros'];
+
 const METAS_PADRAO=[
   {c:'Renda Variável Brasil',a:0.35,d:'Ações e ETFs nacionais'},
   {c:'Renda Variável Global',a:0.20,d:'ETFs e BDRs internacionais'},
@@ -492,7 +494,6 @@ function rCarteira(tab){
         <div class="rsub">${c.lim?'Limite '+R(c.lim):''}</div>
       </div>
     </div>`).join('')
-    +`<button class="btn ghost" style="margin-top:4px" onclick="importFaturaCSV()">📥 Importar fatura (CSV)</button>`
     +`<button class="btn ghost" style="margin-top:4px" onclick="editCartao(-1)">+ Adicionar cartão</button>`;
 
   // Metas — agora somadas pelo campo "meta" de cada ativo/produto de RF,
@@ -552,12 +553,10 @@ function rCarteira(tab){
     {id:'bolsa',  lbl:'Bolsa'},
     {id:'rf',     lbl:'Renda fixa'},
     {id:'crypto', lbl:'Crypto'},
-    {id:'bancos', lbl:'Bancos'},
-    {id:'cartoes',lbl:'Cartões'},
     {id:'metas',  lbl:'Metas'},
   ];
 
-  const content={bolsa:bolsaHTML,rf:rfHTML,crypto:cryptoHTML,bancos:bancosHTML,cartoes:cartoesHTML,metas:metasHTML};
+  const content={bolsa:bolsaHTML,rf:rfHTML,crypto:cryptoHTML,metas:metasHTML};
 
   document.getElementById('p-carteira').innerHTML=`
   <div class="tabs" style="overflow-x:auto;gap:3px">
@@ -627,14 +626,104 @@ function rGastos(){
     </div>
     ${(g.cartoes_gastos||[]).length===0
       ? '<div style="font-size:13px;color:#8e8e93;text-align:center;padding:8px 0">Nenhum cartão cadastrado</div>'
-      : (g.cartoes_gastos||[]).map(c=>`
-        <div class="grow">
-          <span class="nome">${c.n} <span style="font-size:10px;color:#8e8e93">${c.tipo==='debito'?'débito':'crédito'}</span></span>
+      : (g.cartoes_gastos||[]).map((c,i)=>`
+        <div class="grow" style="align-items:flex-start">
+          <span class="nome">${c.n} <span style="font-size:10px;color:#8e8e93">${c.tipo==='debito'?'débito':'crédito'}</span>${c.transacoes&&c.transacoes.length?`<br><span style="font-size:10px;color:#0071e3;cursor:pointer" onclick="detalharCartao(${i})">${c.transacoes.length} lançamentos · detalhar</span>`:''}</span>
           <span class="val" style="color:${c.tipo==='debito'?'#1a1a1e':'#d70015'}">${R(c.fat)}</span>
         </div>`).join('')
     }
+    <button class="btn ghost" style="margin-top:8px" onclick="importFaturaCSV()">📥 Importar fatura (CSV)</button>
   </div>
+
+  <div class="block">
+    <div class="block-title">Análise por categoria</div>
+    <div id="gastos-analise"></div>
+  </div>
+
   <button class="btn" onclick="editGastos()">Editar valores do mês</button>`;
+
+  renderAnaliseGastos();
+}
+
+// Soma os gastos do mês por categoria. Lançamentos importados (com "transacoes")
+// são somados pela categoria de cada linha; cartões sem detalhamento entram
+// inteiros em "Sem detalhamento".
+function gastosPorCategoria(){
+  const totals={};
+  (D.gastos.cartoes_gastos||[]).forEach(c=>{
+    if(c.transacoes && c.transacoes.length){
+      c.transacoes.forEach(t=>{
+        const cat=t.cat||'Outros';
+        totals[cat]=(totals[cat]||0)+(+t.valor||0);
+      });
+    }else if(+c.fat>0){
+      totals['Sem detalhamento']=(totals['Sem detalhamento']||0)+(+c.fat||0);
+    }
+  });
+  return totals;
+}
+
+function renderAnaliseGastos(){
+  const totals=gastosPorCategoria();
+  const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const tot=entries.reduce((s,[,v])=>s+v,0);
+  const el=document.getElementById('gastos-analise');
+  if(!el)return;
+  if(!entries.length){
+    el.innerHTML='<div style="font-size:13px;color:#8e8e93;text-align:center;padding:8px 0">Importe ou detalhe lançamentos do cartão para ver a análise</div>';
+    return;
+  }
+  el.innerHTML=`
+    <div class="donut-wrap" style="margin-bottom:12px">
+      <canvas id="catDonut" width="100" height="100" style="flex-shrink:0"></canvas>
+      <div class="legends">
+        ${entries.slice(0,5).map(([cat,v],i)=>`<div class="legend">
+          <span class="ldot" style="background:${CL[i%CL.length]}"></span>
+          <span>${cat}</span>
+          <span class="lpct">${P(v/tot)}</span>
+        </div>`).join('')}
+        ${entries.length>5?`<div class="legend"><span class="ldot" style="background:#c7c7cc"></span><span>Outras</span><span class="lpct">${P(entries.slice(5).reduce((s,[,v])=>s+v,0)/tot)}</span></div>`:''}
+      </div>
+    </div>
+    ${entries.map(([cat,v],i)=>`
+      <div class="bar-wrap">
+        <div class="bar-info"><span style="font-weight:600">${cat}</span><span>${R(v)} · ${P(v/tot)}</span></div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${P(v/tot)};background:${CL[i%CL.length]}"></div></div>
+      </div>`).join('')}
+  `;
+
+  const cv=document.getElementById('catDonut');
+  if(cv){
+    const cx=cv.getContext('2d'),cx2=50,cy2=50;
+    cx.clearRect(0,0,100,100);
+    let st=-Math.PI/2;
+    entries.forEach(([cat,v],i)=>{
+      const ang=tot>0?(v/tot)*2*Math.PI:0;
+      cx.beginPath();cx.moveTo(cx2,cy2);cx.arc(cx2,cy2,46,st,st+ang);cx.closePath();
+      cx.fillStyle=CL[i%CL.length];cx.fill();st+=ang;
+    });
+    cx.beginPath();cx.arc(cx2,cy2,29,0,2*Math.PI);cx.fillStyle='#fff';cx.fill();
+  }
+}
+
+function detalharCartao(i){
+  mType='detalhe_cartao';mIdx=i;
+  const c=D.gastos.cartoes_gastos[i];
+  const trans=c.transacoes||[];
+  openModal('Lançamentos — '+c.n,
+    (!trans.length
+      ? '<div style="font-size:13px;color:#8e8e93;text-align:center;padding:12px 0">Nenhum lançamento detalhado (fatura sem importação de CSV)</div>'
+      : trans.map((t,ti)=>`
+        <div style="background:#f9f9f9;border-radius:10px;padding:8px 10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;gap:8px">
+            <span>${t.date} · ${t.title}</span><span style="font-weight:600;white-space:nowrap">${R(t.valor)}</span>
+          </div>
+          <select id="tc_${ti}" style="width:100%;background:#fff;border:1px solid #e5e5ea;border-radius:8px;padding:6px 8px;font-size:12px">
+            ${CATEGORIAS_GASTO.map(cat=>`<option value="${cat}" ${t.cat===cat?'selected':''}>${cat}</option>`).join('')}
+          </select>
+        </div>`).join('')
+    )
+  );
 }
 
 function proximoMes(){
@@ -975,6 +1064,25 @@ function parseCSVLine(line){
   return result;
 }
 
+// Sugestão simples de categoria a partir de palavras-chave no título do lançamento.
+// É só um ponto de partida — o usuário pode reclassificar cada lançamento manualmente.
+function sugerirCategoria(title){
+  const t=(title||'').toLowerCase();
+  const regras=[
+    [/ifood|restaurante|lanchonete|padaria|gelateria|outback|hamburg|pizza|churrasc/,'Alimentação'],
+    [/uber|99|lava jato|posto|combust|estacionamento|latam|gol linhas|azul/,'Transporte'],
+    [/amazon|mercado livre|shopee|tiktok shop|cea|c&a|zara|centauro|asics|renner|shein|boticario|marketplace/,'Compras'],
+    [/farma|drogaria|clinica|hospital|laborat|dental|academia|smart ?fit/,'Saúde'],
+    [/netflix|spotify|hbo|disney|prime video|apple\.com|icloud|youtube|amazon prime/,'Assinaturas'],
+    [/cinema|ingresso|show|bar |balada/,'Lazer'],
+    [/hotel|airbnb|booking|passagem|latam air|gol linhas a/,'Viagem'],
+    [/aluguel|condomin|luz|energia|agua|iptu/,'Moradia'],
+    [/curso|faculdade|escola|udemy|alura/,'Educação'],
+  ];
+  for(const[re,cat] of regras) if(re.test(t)) return cat;
+  return 'Outros';
+}
+
 // Espera cabeçalho: date,title,amount (formato de exportação do Nubank)
 function parseNubankCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
@@ -983,7 +1091,7 @@ function parseNubankCSV(text){
   const items=rows.filter(r=>r.length>=3).map(r=>{
     const date=r[0],title=r[1],valor=parseValorBR(r[2]);
     total+=valor;
-    return{date,title,valor};
+    return{date,title,valor,cat:sugerirCategoria(title)};
   });
   return{items,total};
 }
@@ -1010,15 +1118,16 @@ function importFaturaCSV(){
 
 function openImportModal(total,items){
   mType='import_fatura';mIdx=null;
-  const opts=(D.cartoes_cc||[]).map(c=>c.n);
+  const opts=(D.gastos.cartoes_gastos||[]).map(c=>c.n);
   openModal('Importar fatura ('+items.length+' lançamentos)',
     `<div class="field"><label>Total identificado</label><input type="text" value="${R(total)}" disabled></div>`+
     fldSelect('Aplicar ao cartão existente','import_card','',opts)+
     fld('Ou novo cartão (nome)','import_new','','text')+
+    fldSelect('Tipo (para novo cartão)','import_tipo','credito',['credito','debito'])+
     `<div class="imp-list">${items.map(it=>`
       <div class="imp-item"><span>${it.date} · ${it.title}</span><span>${R(it.valor)}</span></div>
     `).join('')}</div>`+
-    `<div style="font-size:11px;color:#8e8e93;margin-top:2px">O total substitui a "Fatura atual" do cartão escolhido.</div>`
+    `<div style="font-size:11px;color:#8e8e93;margin-top:2px">O total substitui o valor de "Fatura / gasto" do cartão escolhido, no mês atual (${D.gastos.mes}).</div>`
   );
 }
 
@@ -1076,13 +1185,25 @@ function saveModal(){
   }else if(mType==='import_fatura'){
     const cardName=gv('import_new')||gv('import_card');
     if(!cardName){showToast('Escolha ou digite um cartão');return;}
-    if(!D.cartoes_cc)D.cartoes_cc=[];
-    let idx=D.cartoes_cc.findIndex(c=>c.n===cardName);
-    if(idx<0){D.cartoes_cc.push({n:cardName,ban:'Nubank',lim:0,fat:0});idx=D.cartoes_cc.length-1;}
-    D.cartoes_cc[idx].fat=pendingImport.total;
-    D.cartoes_cc[idx].transacoes=pendingImport.items;
+    if(!D.gastos.cartoes_gastos)D.gastos.cartoes_gastos=[];
+    let idx=D.gastos.cartoes_gastos.findIndex(c=>c.n===cardName);
+    if(idx<0){
+      D.gastos.cartoes_gastos.push({n:cardName,tipo:gv('import_tipo')||'credito',fat:0});
+      idx=D.gastos.cartoes_gastos.length-1;
+    }
+    D.gastos.cartoes_gastos[idx].fat=pendingImport.total;
+    D.gastos.cartoes_gastos[idx].transacoes=pendingImport.items;
     pendingImport=null;
-    sv(D,'Fatura importada!');closeModal();rCarteira('cartoes');return;
+    sv(D,'Fatura importada!');closeModal();rGastos();return;
+  }else if(mType==='detalhe_cartao'){
+    const c=D.gastos.cartoes_gastos[mIdx];
+    if(c.transacoes && c.transacoes.length){
+      c.transacoes=c.transacoes.map((t,ti)=>({
+        ...t,
+        cat:document.getElementById('tc_'+ti)?.value||t.cat
+      }));
+    }
+    sv(D,'Categorias atualizadas');closeModal();rGastos();return;
   }else if(mType==='gas'){
     D.gastos={...D.gastos,mes:gv('mes'),
       rec:{sal:gv('sal'),extras:D.gastos.rec.extras||[]},
