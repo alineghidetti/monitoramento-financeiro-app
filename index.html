@@ -182,6 +182,7 @@ const INIT={
     rec:{sal:0,extras:[]},
     fixas:[],
     cartoes_gastos:[]},
+  gastos_arquivo:{},
   hist:MESES.map(m=>({m,r:0,g:0,p:0}))
 };
 
@@ -263,6 +264,7 @@ function migrar(d){
   }
   if(d.gastos && !d.gastos.cartoes_gastos) d.gastos.cartoes_gastos=[];
   if(!d.crypto) d.crypto=[];
+  if(!d.gastos_arquivo) d.gastos_arquivo={};
   // Remapeia categorias antigas de lançamentos de cartão para o novo conjunto
   const remap={
     'Alimentação':'Alimentação','Transporte':'Transporte','Compras':'Compras','Saúde':'Saúde',
@@ -588,11 +590,12 @@ function rGastos(){
 
   document.getElementById('p-gastos').innerHTML=`
   <div class="next-mes-bar">
-    <div class="next-mes-info">
+    <button class="next-mes-btn" style="background:#f2f2f7;color:#3c3c43" onclick="mesAnterior()">← Anterior</button>
+    <div class="next-mes-info" style="text-align:center">
       <div class="next-mes-label">Mês atual</div>
       <div class="next-mes-val">${g.mes}</div>
     </div>
-    <button class="next-mes-btn" onclick="proximoMes()">Próximo mês →</button>
+    <button class="next-mes-btn" onclick="proximoMes()">Próximo →</button>
   </div>
 
   <div class="cards">
@@ -760,10 +763,22 @@ function detalharCartao(i){
   );
 }
 
+// Guarda uma cópia completa (receitas, fixas, cartões e lançamentos) do mês
+// atual no arquivo, indexada pelo rótulo do mês (ex: "Jun/2025"), para que
+// seja possível voltar e reencontrar os dados exatos depois.
+function arquivarMesAtual(){
+  if(!D.gastos_arquivo)D.gastos_arquivo={};
+  D.gastos_arquivo[D.gastos.mes]=JSON.parse(JSON.stringify({
+    rec:D.gastos.rec,
+    fixas:D.gastos.fixas||[],
+    cartoes_gastos:D.gastos.cartoes_gastos||[]
+  }));
+}
+
 function proximoMes(){
   D=ld();
   const g=D.gastos;
-  const cur=g.mesIdx||5;
+  const cur=g.mesIdx||0;
   const renda=(+g.rec.sal||0)+(g.rec.extras||[]).reduce((s,e)=>s+(+e.v||0),0);
   const fix=(g.fixas||[]).reduce((s,f)=>s+(+f.v||0),0);
   const cart=(g.cartoes_gastos||[]).reduce((s,c)=>s+(+c.fat||0),0);
@@ -777,18 +792,53 @@ function proximoMes(){
   if(!D.hist)D.hist=MESES.map(m=>({m,r:0,g:0,p:0}));
   D.hist[cur]={m:MESES[cur],r:renda,g:fix+cart,p:patrimonio};
 
+  // Guarda os detalhes completos do mês que está sendo encerrado
+  arquivarMesAtual();
+
   // Avançar mês
   const next=(cur+1)%12;
   const ano=g.mes?g.mes.slice(-4):'2025';
   const nextAno=next===0?String(+ano+1):ano;
-  D.gastos={
-    mes:MESES[next]+'/'+nextAno,
-    mesIdx:next,
-    rec:{sal:0,extras:[]},
-    fixas:g.fixas||[],
-    cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0}))
-  };
+  const nextMes=MESES[next]+'/'+nextAno;
+
+  // Se o próximo mês já tinha sido visitado antes (ex: usuário voltou e agora
+  // avança de novo), restaura os dados completos dele em vez de zerar tudo.
+  if(D.gastos_arquivo && D.gastos_arquivo[nextMes]){
+    D.gastos={mes:nextMes,mesIdx:next,...JSON.parse(JSON.stringify(D.gastos_arquivo[nextMes]))};
+  }else{
+    D.gastos={
+      mes:nextMes,
+      mesIdx:next,
+      rec:{sal:0,extras:[]},
+      fixas:g.fixas||[],
+      cartoes_gastos:(D.gastos.cartoes_gastos||[]).map(c=>({...c,fat:0,transacoes:[]}))
+    };
+  }
   sv(D,'Mês salvo! Bem-vinda a '+MESES[next]);
+  rGastos();
+}
+
+function mesAnterior(){
+  D=ld();
+  const g=D.gastos;
+  const cur=g.mesIdx||0;
+
+  // Guarda os detalhes completos do mês atual antes de sair dele
+  arquivarMesAtual();
+
+  const prev=(cur-1+12)%12;
+  const ano=g.mes?g.mes.slice(-4):'2025';
+  const prevAno=cur===0?String(+ano-1):ano;
+  const prevMes=MESES[prev]+'/'+prevAno;
+
+  if(D.gastos_arquivo && D.gastos_arquivo[prevMes]){
+    // Mês anterior já existia (foi arquivado quando avançamos por ele) — restaura tudo
+    D.gastos={mes:prevMes,mesIdx:prev,...JSON.parse(JSON.stringify(D.gastos_arquivo[prevMes]))};
+  }else{
+    // Ainda não há registro desse mês; abre em branco, mantendo as despesas fixas
+    D.gastos={mes:prevMes,mesIdx:prev,rec:{sal:0,extras:[]},fixas:g.fixas||[],cartoes_gastos:[]};
+  }
+  sv(D,'Voltou para '+MESES[prev]);
   rGastos();
 }
 
