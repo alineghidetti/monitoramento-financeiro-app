@@ -160,10 +160,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);back
 <script>
 const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-// Categorias de meta padrão. Cada ativo/produto de RF pode ser marcado com
-// um "meta" (nome da categoria) para ser somado corretamente, independente
-// da posição dele no array — corrige o bug antigo de índices fixos.
-const CATEGORIAS_GASTO=['Alimentação','Transporte','Compras','Saúde','Assinaturas','Lazer','Viagem','Moradia','Educação','Outros'];
+// Categorias de gasto do cartão de crédito.
+const CATEGORIAS_GASTO=['Mercado','Alimentação','Compras','Assinaturas','Carro','Transporte','Saúde','Lazer','Educação','Viagem','Outros'];
 
 const METAS_PADRAO=[
   {c:'Renda Variável Brasil',a:0.35,d:'Ações e ETFs nacionais'},
@@ -265,6 +263,17 @@ function migrar(d){
   }
   if(d.gastos && !d.gastos.cartoes_gastos) d.gastos.cartoes_gastos=[];
   if(!d.crypto) d.crypto=[];
+  // Remapeia categorias antigas de lançamentos de cartão para o novo conjunto
+  const remap={
+    'Alimentação':'Alimentação','Transporte':'Transporte','Compras':'Compras','Saúde':'Saúde',
+    'Assinaturas':'Assinaturas','Lazer':'Lazer','Viagem':'Viagem','Moradia':'Outros','Educação':'Educação','Outros':'Outros'
+  };
+  (d.cartoes_cc||[]).forEach(c=>{});
+  (d.gastos.cartoes_gastos||[]).forEach(c=>{
+    if(c.transacoes && c.transacoes.length){
+      c.transacoes=c.transacoes.map(t=>({...t,cat:CATEGORIAS_GASTO.includes(t.cat)?t.cat:(remap[t.cat]||'Outros')}));
+    }
+  });
   return d;
 }
 
@@ -1069,15 +1078,17 @@ function parseCSVLine(line){
 function sugerirCategoria(title){
   const t=(title||'').toLowerCase();
   const regras=[
-    [/ifood|restaurante|lanchonete|padaria|gelateria|outback|hamburg|pizza|churrasc/,'Alimentação'],
-    [/uber|99|lava jato|posto|combust|estacionamento|latam|gol linhas|azul/,'Transporte'],
-    [/amazon|mercado livre|shopee|tiktok shop|cea|c&a|zara|centauro|asics|renner|shein|boticario|marketplace/,'Compras'],
-    [/farma|drogaria|clinica|hospital|laborat|dental|academia|smart ?fit/,'Saúde'],
+    [/mercado|supermercado|hortifruti|atacad|carrefour|pao de acucar|hiper/,'Mercado'],
+    [/ifood|restaurante|lanchonete|padaria|gelateria|outback|hamburg|pizza|churrasc|cafe|bar /,'Alimentação'],
+    [/amazon|mercado livre|shopee|tiktok shop|cea|c&a|zara|centauro|asics|renner|shein|boticario|marketplace|shopping/,'Compras'],
     [/netflix|spotify|hbo|disney|prime video|apple\.com|icloud|youtube|amazon prime/,'Assinaturas'],
-    [/cinema|ingresso|show|bar |balada/,'Lazer'],
-    [/hotel|airbnb|booking|passagem|latam air|gol linhas a/,'Viagem'],
-    [/aluguel|condomin|luz|energia|agua|iptu/,'Moradia'],
+    [/posto|combust|gasolina|oficina|pneu|autopeça|lava jato|estacionamento/,'Carro'],
+    [/uber|99|passagem|latam|gol linhas|azul|metro|onibus/,'Transporte'],
+    [/farma|drogaria|remedio|clinica|hospital|laborat|dental|academia|smart ?fit/,'Saúde'],
+    [/cinema|ingresso|show|balada/,'Lazer'],
     [/curso|faculdade|escola|udemy|alura/,'Educação'],
+    [/hotel|airbnb|booking/,'Viagem'],
+    [/aluguel|condomin|luz|energia|agua|iptu/,'Outros'],
   ];
   for(const[re,cat] of regras) if(re.test(t)) return cat;
   return 'Outros';
