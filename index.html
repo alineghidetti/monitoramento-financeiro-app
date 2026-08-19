@@ -112,12 +112,39 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(249,249,249,.95);back
 .imp-item{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:.5px solid #f2f2f7}
 .imp-item:last-child{border-bottom:none}
 .imp-list{max-height:220px;overflow-y:auto;background:#f9f9f9;border-radius:10px;padding:8px 12px;margin-bottom:10px}
+
+/* ── VIEW MODE TOGGLE (mobile / desktop) ───────────────── */
+.view-toggle{display:flex;background:rgba(142,142,147,.18);border-radius:8px;padding:2px;backdrop-filter:blur(4px)}
+.view-toggle button{background:none;border:none;padding:5px 9px;font-size:13px;border-radius:6px;cursor:pointer;color:#8e8e93;line-height:1;display:flex;align-items:center}
+.view-toggle button.on{background:#fff;color:#0071e3;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+body.desktop .page{max-width:1180px;padding:20px 28px}
+body.desktop h1{max-width:1180px;padding:24px 28px 4px}
+body.desktop .sub{max-width:1180px;padding:0 28px 16px}
+body.desktop .cards{grid-template-columns:repeat(4,1fr)}
+body.desktop #p-carteira .cards{grid-template-columns:repeat(4,1fr)}
+body.desktop .tabs{max-width:520px}
+body.desktop nav{max-width:1180px;left:0;right:0;margin:0 auto;border-radius:16px 16px 0 0;box-shadow:0 -2px 20px rgba(0,0,0,.06)}
+body.desktop .nbtn{flex:0 0 140px;flex-direction:row;font-size:13px;padding:14px 10px;gap:8px;justify-content:center}
+body.desktop .nbtn svg{width:19px;height:19px}
+body.desktop #p-visao,body.desktop #p-carteira,body.desktop #p-gastos,body.desktop #p-historico{display:grid;grid-template-columns:1fr;gap:0}
+body.desktop .section{margin-bottom:24px}
+body.desktop .donut-wrap{gap:28px}
+body.desktop .modal{max-width:480px}
+body.desktop .block{padding:18px 22px}
+@media (min-width:900px){
+  body.desktop #p-carteira .row,body.desktop #p-carteira .meta-row{padding:15px 18px}
+}
 </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
-<div style="position:fixed;top:14px;right:14px;display:flex;flex-direction:row;gap:5px;z-index:40;align-items:center">
+<div style="position:fixed;top:14px;right:14px;display:flex;flex-direction:row;gap:8px;z-index:40;align-items:center">
+  <div class="view-toggle" id="viewToggle">
+    <button id="vt-mobile" onclick="setView('mobile')" title="Visão mobile">📱</button>
+    <button id="vt-desktop" onclick="setView('desktop')" title="Visão desktop">🖥️</button>
+  </div>
   <button class="export-btn" onclick="exportData()">&#8595; exp</button>
   <button class="export-btn" onclick="importData()">&#8593; imp</button>
 </div>
@@ -189,6 +216,21 @@ const INIT={
 function ld(){try{const d=JSON.parse(localStorage.getItem('fd'));return d?Object.assign({},INIT,d):INIT}catch{return INIT}}
 function sv(d,msg){localStorage.setItem('fd',JSON.stringify(d));showToast(msg||'Salvo');}
 let D=ld();
+
+// ── VIEW MODE (mobile / desktop) ─────────────────────────
+function detectDefaultView(){
+  return window.matchMedia && window.matchMedia('(min-width:900px)').matches ? 'desktop' : 'mobile';
+}
+function setView(mode){
+  document.body.classList.toggle('desktop',mode==='desktop');
+  document.getElementById('vt-mobile').classList.toggle('on',mode==='mobile');
+  document.getElementById('vt-desktop').classList.toggle('on',mode==='desktop');
+  localStorage.setItem('fd_view',mode);
+}
+(function initView(){
+  const saved=localStorage.getItem('fd_view');
+  setView(saved||detectDefaultView());
+})();
 
 const R=v=>v==null||v===''||isNaN(+v)?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const P=v=>(+v*100).toFixed(1)+'%';
